@@ -1,0 +1,3 @@
+module MNPDynamics
+
+end # module
