@@ -1,6 +1,8 @@
 clear
 close all
 
+addpath('../../matlab/')
+
 % CONSTANTS
 D = 20;         % particle diameter in nm
 alpha = 0.1;    % damping coefficient
@@ -44,7 +46,7 @@ f = 25000;
 B =  @(t) rot*(0.012*[0*t; sin(2*pi*f*t); sin(2*pi*f*t)]);
 
 tic;
-[t,y] = return_neel(B, pr1,pr2, tau_N, alpha, t, N);
+[t,y] = simulation_neel(B, pr1,pr2, tau_N, alpha, t, N);
 time = toc;
 disp(strcat('Solving ODE system took',{' '},num2str(time),' seconds.'))
 

@@ -1,4 +1,4 @@
-function [t,y] = return_neel(Bb,pr1,pr2,tau_N,alpha, t_vec, N)
+function [t,y] = simulation_neel(Bb,pr1,pr2,tau_N,alpha, t_vec, N)
 % Returns the solution of the Neel rotation model for given parameters.
 %       INPUTS:
 %       Bb: function of one scalar variable (time) that returns a 3D column
