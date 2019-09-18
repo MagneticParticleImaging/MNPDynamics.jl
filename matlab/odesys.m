@@ -1,4 +1,4 @@
-function dydt = neel_odesys(t,y, jacflag, B,  m_offset, m_b3, m_bp, m_bm, tau_N)
+function dydt = odesys(t,y, jacflag, B,  m_offset, m_b3, m_bp, m_bm, tau_N)
 % Returns the right-hand side of the ODE system for given time t
 % and given state y.
 %INPUTS:

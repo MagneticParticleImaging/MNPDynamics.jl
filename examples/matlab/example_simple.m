@@ -3,6 +3,11 @@ close all
 
 addpath('../../matlab/')
 
+% Choose whether Brownian or Neel relaxation is simulated
+MODE = 'brown';
+%MODE = 'neel';
+
+
 % CONSTANTS
 %params.D_core = 20e-9;         % particle diameter in m
 %params.alpha = 0.1;    % damping coefficient
@@ -12,6 +17,8 @@ addpath('../../matlab/')
 %params.kAnis = 2100;
 %params.kAnis = 625;
 %params.kAnis = 0;
+
+%params.viscosity = 1e-2;
 
 t_length = 1000;% length of time vector
 t_max = 2/25000;% maximum evaluation time in seconds
@@ -24,10 +31,10 @@ params.n = [0;1;0];
 f = 25000;
 
 % Magnetic field for simulation
-B =  @(t) 0.012*[0*t; sin(2*pi*f*t); sin(2*pi*f*t)];
+B =  @(t) 0.012*[0*t; sin(2*pi*f*t)+.1; sin(2*pi*f*t)];
 
 tic;
-[t,exp] = simulation_neel(B, t, params);
+[t,exp] = simulation(B, t, MODE, params);
 time = toc;
 disp(strcat('Solving ODE system took',{' '},num2str(time),' seconds.'))
 xexp = exp(:,1);
