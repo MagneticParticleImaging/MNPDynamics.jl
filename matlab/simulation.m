@@ -134,6 +134,7 @@ if strcmp(mode,'neel')
             J(ind) = counter;
             I(ind) = counter;
             V(ind) = -r*(r+1) + pr2* 2*(r^2+r-3*q^2)/((2*r+3)*(2*r-1));
+            %V(ind) = pr2* 2*(r^2+r-3*q^2)/((2*r+3)*(2*r-1));
             ind = ind+1;
             if q~=-r
                 if r~=0 && q~=r
@@ -179,7 +180,7 @@ if strcmp(mode,'neel')
             counter = counter+1;
             J(ind) = counter;
             I(ind) = counter;
-            V(ind) = 1i/(2*alpha) * pr1 *2*q;
+            V(ind) = -1i/(2*alpha) * pr1 *2*q;
             ind = ind+1;
             if q~=-r
                 if r~=0 && q~=r
@@ -213,7 +214,7 @@ if strcmp(mode,'neel')
             if q~=r
                 J(ind) = counter+1;
                 I(ind) = counter;
-                V(ind) = 1i/(2*alpha) * pr1 *(r-q)*(r+q+1);
+                V(ind) = -1i/(2*alpha) * pr1 *(r-q)*(r+q+1);
                 ind = ind+1;
             end
             if q<(r-1)
@@ -246,7 +247,7 @@ if strcmp(mode,'neel')
             if q~=-r
                 J(ind) = counter-1;
                 I(ind) = counter;
-                V(ind) = 1i/(2*alpha)*pr1;
+                V(ind) = -1i/(2*alpha)*pr1;
                 ind = ind+1;
             end
             if q>(-r+1)

@@ -18,6 +18,7 @@ B_3 = B(3,:);
 M = m_offset + B_3 .* m_b3 + (B_1 + 1i*B_2) .* m_bp + (B_1 - 1i*B_2).*m_bm;
 
 
+
 if jacflag
     dydt = (1/(2*tau_N))*M;
 else
