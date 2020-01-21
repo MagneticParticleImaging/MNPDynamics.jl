@@ -1,4 +1,4 @@
-function dydt = odesys(t,y, jacflag, B,  m_offset, m_b3, m_bp, m_bm, tau_N)
+function dydt = odesys(t,y, jacflag, B, n, m_offset, m_b3, m_bp, m_bm,m_squ,m_nmin3,m_npin3,m_nmi,m_npi,tau_N)
 % Returns the right-hand side of the ODE system for given time t
 % and given state y.
 %INPUTS:
@@ -14,8 +14,16 @@ B = B(t);
 B_1 = B(1,:);
 B_2 = B(2,:);
 B_3 = B(3,:);
+if isa(n, 'function_handle')
+    n = n(t);
+end
+n1 = n(1);
+n2 = n(2);
+n3 = n(3);
 
-M = m_offset + B_3 .* m_b3 + (B_1 + 1i*B_2) .* m_bp + (B_1 - 1i*B_2).*m_bm;
+M =  m_offset + B_3 .* m_b3 + (B_1 + 1i*B_2) .* m_bp + (B_1 - 1i*B_2).*m_bm...
+    +(n1^2+n2^2-2*n3^2).*m_squ + (n1-1i*n2)*n3.*m_nmin3 + (n1+1i*n2)*n3.*m_npin3...
+    +(n1-1i*n2)^2.*m_nmi + (n1+1i*n2)^2.*m_npi;
 
 
 
@@ -24,5 +32,6 @@ if jacflag
 else
     dydt = (1/(2*tau_N)) * M*y;
 end
+
 end
 

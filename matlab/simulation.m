@@ -1,4 +1,4 @@
-function [t,exp] = simulation(B, t_vec, mode, varargin)
+function [t,exp,y] = simulation(B, t_vec, mode, varargin)
 % Returns the solution of the Neel rotation model for given parameters.
 %       INPUTS:
 %       B: function of one scalar variable (time) that returns a 3D column
@@ -140,7 +140,7 @@ if strcmp(mode,'neel')
                 if r~=0 && q~=r
                     J(ind) = counter-2*r;
                     I(ind) = counter;
-                    V(ind) = 2*1i/alpha * pr2 * q*(r-q)/(2*r-1);
+                    V(ind) = -2*1i/alpha * pr2 * q*(r-q)/(2*r-1);%!
                     ind = ind+1;
                 end
             end
@@ -159,7 +159,7 @@ if strcmp(mode,'neel')
             if r<N
                 J(ind) = counter+2*(r+1);
                 I(ind) = counter;
-                V(ind) = 2*1i/alpha * pr2 * q*(r+q+1)/(2*r+3);
+                V(ind) = -2*1i/alpha * pr2 * q*(r+q+1)/(2*r+3);%!
                 ind = ind+1;
             end
         end
@@ -180,7 +180,7 @@ if strcmp(mode,'neel')
             counter = counter+1;
             J(ind) = counter;
             I(ind) = counter;
-            V(ind) = -1i/(2*alpha) * pr1 *2*q;
+            V(ind) = -1i/(2*alpha) * pr1 *2*q;%!
             ind = ind+1;
             if q~=-r
                 if r~=0 && q~=r
@@ -214,7 +214,7 @@ if strcmp(mode,'neel')
             if q~=r
                 J(ind) = counter+1;
                 I(ind) = counter;
-                V(ind) = -1i/(2*alpha) * pr1 *(r-q)*(r+q+1);
+                V(ind) = -1i/(2*alpha) * pr1 *(r-q)*(r+q+1);%!
                 ind = ind+1;
             end
             if q<(r-1)
@@ -247,7 +247,7 @@ if strcmp(mode,'neel')
             if q~=-r
                 J(ind) = counter-1;
                 I(ind) = counter;
-                V(ind) = -1i/(2*alpha)*pr1;
+                V(ind) = -1i/(2*alpha)*pr1;%!
                 ind = ind+1;
             end
             if q>(-r+1)
@@ -476,7 +476,7 @@ y0(1) = 1/(4*pi);
 
 % solve system
 jac = @(t,y)odesys(t,y,1, B, m_offset, m_b3, m_bp, m_bm,tau);
-opts = odeset("Vectorized", "on","Jacobian", jac, "RelTol", 1e-3);
+opts = odeset("Vectorized", "on","Jacobian", jac, "RelTol", 1e-5);
 %opts = odeset( 'RelTol', 1e-3);
 rhs = @(t,y)odesys(t,y,0, B, m_offset, m_b3, m_bp, m_bm,tau);
 [t,y] = ode15s(rhs,t_vec , y0, opts);
