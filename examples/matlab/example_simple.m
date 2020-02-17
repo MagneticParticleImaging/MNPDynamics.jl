@@ -19,8 +19,8 @@ MODE = 'neel';
 %params.kAnis = 0;
 params.kAnis = 11000;
 %params.alpha = 0.1;
-%params.alpha = .1;
-params.alpha = Inf;
+params.alpha = .1;
+%params.alpha = Inf;
 params.tau_N = 1.4163e-08;
 %params.tau_N = 1e-4;
 params.N=20;
@@ -32,12 +32,12 @@ t_max = 4/25000;% maximum evaluation time in seconds
 t = linspace(0,t_max,t_length);
 
 % Anisotropy axis
-n_func = @(t)[cos(.25*2*pi*t'/t_max);sin(.25*2*pi*t'/t_max);0*t'].';
+%n_func = @(t)[cos(.25*2*pi*t'/t_max);sin(.25*2*pi*t'/t_max);0*t'].';
 %n_func = @(t) [ones(size(t));0*t;0*t];
 %params.n = @(t) n_func(t)/norm(n_func(t));
-params.n = @(t) n_func(t);
+%params.n = @(t) n_func(t);
 %params.n =[1;0;1]/sqrt(2);
-%params.n = [1;0;0];
+params.n = [1;0;0];
 %params.n = [0;0;1];
 %params.kAnis = 0;
 

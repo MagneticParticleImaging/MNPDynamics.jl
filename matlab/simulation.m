@@ -476,7 +476,7 @@ y0(1) = 1/(4*pi);
 
 % solve system
 jac = @(t,y)odesys(t,y,1, B, m_offset, m_b3, m_bp, m_bm,tau);
-opts = odeset("Vectorized", "on","Jacobian", jac, "RelTol", 1e-5);
+opts = odeset("Vectorized", "on","Jacobian", jac, "RelTol", 1e-3);
 %opts = odeset( 'RelTol', 1e-3);
 rhs = @(t,y)odesys(t,y,0, B, m_offset, m_b3, m_bp, m_bm,tau);
 [t,y] = ode15s(rhs,t_vec , y0, opts);
