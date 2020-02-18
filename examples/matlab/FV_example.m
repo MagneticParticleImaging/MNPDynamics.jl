@@ -4,35 +4,13 @@ tic
 
 addpath('../../matlab')
 load('../../matlab/FV_meshes/mesh_4.mat')
-clear tr
 
-tr.a_ijs = a_ijs;
-tr.areas = areas;
-tr.areasi = areasi;
-tr.areasidil = areasidil;
-tr.C = C;
-tr.centers = centers;
-tr.ds = ds;
-tr.depth_level = depth_level;
-tr.e_is = e_is;
-tr.edge_dist = edge_dist;
-tr.edgeAttachments = edgeAttachments;
-tr.edges = edges;
-tr.flow_signs = flow_signs;
-tr.fMat = fMat;
-tr.iis = iis;
-tr.is = is;
-tr.js = js;
-tr.mids = mids;
-tr.neighs = neighs;
-tr.tr2edge = tr2edge;
-tr.valcs = valcs;
-tr.vMat = vMat;
-
-
-params.n = [0;0;1];
+params.kAnis = 11000;
+%params.n = [0;0;1];
 f = 25000;
-B =@(t)0.012*[cos(.34*2*pi*f*t)-.05;sin(.7*2*pi*f*t)+.1;sin(2*pi*f*t)];
+%params.n = @(t) [cos(2*pi*f*t);sin(2*pi*f*t);0];
+%B =@(t)0.012*[cos(.34*2*pi*f*t)-.05;sin(.7*2*pi*f*t)+.1;sin(2*pi*f*t)];
+B = @(t)0.012*[0;0;sin(2*pi*f*t)];
 
 t = linspace(0,4/f, 1000);
 
@@ -40,7 +18,7 @@ t = linspace(0,4/f, 1000);
 
 total = zeros(size(t));
 for i=1:length(t)
-    total(i) = y(i,:)*areas';
+    total(i) = y(i,:)*tr.areas';
 end
 plot(t, total)
 figure

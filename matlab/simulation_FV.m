@@ -78,8 +78,8 @@ end
 N = size(tr.fMat,1);
 tr.C = 1/(2*tau_N)*tr.areasi.*tr.C;
 y0 = 1/(4*pi)*ones(1,N);
-rhs = @(t,y) FV_matrix(B(t), N, p1, p2, p3, p4, beta, tr.mids, tr.ds, n, tr.iis, tr.valcs, tr.C, tr.C, tr.a_ijs, tr.e_is, tr.areasidil, tr.tr2edge, tr.flow_signs)*y;
-jac = @(t,y) FV_matrix(B(t), N, p1, p2, p3, p4, beta, tr.mids, tr.ds, n, tr.iis, tr.valcs, tr.C, tr.C, tr.a_ijs, tr.e_is, tr.areasidil, tr.tr2edge, tr.flow_signs);
+rhs = @(t,y) FV_matrix(t, B, N, p1, p2, p3, p4, beta, tr.mids, tr.ds, n, tr.iis, tr.valcs, tr.C, tr.C, tr.a_ijs, tr.e_is, tr.areasidil, tr.tr2edge, tr.flow_signs)*y;
+jac = @(t,y) FV_matrix(t, B, N, p1, p2, p3, p4, beta, tr.mids, tr.ds, n, tr.iis, tr.valcs, tr.C, tr.C, tr.a_ijs, tr.e_is, tr.areasidil, tr.tr2edge, tr.flow_signs);
 opts = odeset('Jacobian', jac, 'RelTol', RelTol);
 [t,y] = ode15s(rhs, t_vec, y0, opts);
 

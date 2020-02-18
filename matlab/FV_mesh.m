@@ -191,4 +191,30 @@ areasi = 1./areas';
 areasidil = [areasi; areasi; areasi];
 
 clear a alpha aijsnew att1 att2 att3 atts1 atts2 atts3 b beta c e1 edge flow_signs_temp gamma h_ij i ii iisnew j j1 j2 m neighbors
-save('mesh_5.mat')
+
+clear tr
+
+tr.a_ijs = a_ijs;
+tr.areas = areas;
+tr.areasi = areasi;
+tr.areasidil = areasidil;
+tr.C = C;
+tr.centers = centers;
+tr.ds = ds;
+tr.depth_level = depth_level;
+tr.e_is = e_is;
+tr.edge_dist = edge_dist;
+tr.edgeAttachments = edgeAttachments;
+tr.edges = edges;
+tr.flow_signs = flow_signs;
+tr.fMat = fMat;
+tr.iis = iis;
+tr.is = is;
+tr.js = js;
+tr.mids = mids;
+tr.neighs = neighs;
+tr.tr2edge = tr2edge;
+tr.valcs = valcs;
+tr.vMat = vMat;
+
+save('FV_meshes/mesh_5.mat','tr');

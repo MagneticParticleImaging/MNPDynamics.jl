@@ -1,5 +1,10 @@
-function [M] = FV_matrix(B, N, p1, p2, p3, p4, beta, mids, ds, n, iis, vals, A, C, a_ijs, e_is, areasidil, tr2edge, flow_signs)
+function [M] = FV_matrix(t, B, N, p1, p2, p3, p4, beta, mids, ds, n, iis, vals, A, C, a_ijs, e_is, areasidil, tr2edge, flow_signs)
 % outputs the right-hand matrix for a given x and B(t,x).
+
+B = B(t);
+if isa(n, 'function_handle')
+    n = n(t);
+end
 
 d_ijt = sum(advection_term(mids, B, n, p1, p2, p3, p4).*e_is,1)'.*ds;
 d_ij = flow_signs.*d_ijt(tr2edge);
