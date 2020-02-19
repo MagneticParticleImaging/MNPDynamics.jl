@@ -1,11 +1,12 @@
 clear
 %close all
 
-addpath('../../matlab_dynamic_n')
+addpath('../../matlab')
 
 % Choose whether Brownian or Neel relaxation is simulated
 %MODE = 'brown';
 MODE = 'neel';
+%MODE = 'brown';
 
 
 % CONSTANTS
@@ -18,10 +19,12 @@ MODE = 'neel';
 %params.kAnis = 625;
 %params.kAnis = 0;
 params.kAnis = 11000;
+params.RelTol = 1e-3;
 %params.alpha = 0.1;
-params.alpha = .1;
+%params.p1 = 0;
+%params.p3 = 0;
 %params.alpha = Inf;
-params.tau_N = 1.4163e-08;
+%params.tau_N = 1.4163e-08;
 %params.tau_N = 1e-4;
 params.N=20;
 %params.viscosity = 1e-2;

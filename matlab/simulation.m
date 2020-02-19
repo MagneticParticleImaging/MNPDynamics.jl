@@ -76,6 +76,31 @@ if strcmp(mode,'neel')
     else
         n = [0;0;1];
     end
+    if isfield(params, 'p1')
+        p1 = params.p1;
+    else
+        p1 = gam_gyro/(1+alpha^2);
+    end
+    if isfield(params,'p2')
+        p2 = params.p2;
+    else
+        p2 = alpha*gam_gyro/(1+alpha^2);
+    end
+    if isfield(params, 'p3')
+        p3 = params.p3;
+    else
+        p3 = 2*gam_gyro/(1+alpha^2)*kAnis/M_S;
+    end
+    if isfield(params, 'p4')
+        p4 = params.p4;
+    else
+        p4 = 2*alpha*gam_gyro/(1+alpha^2)*kAnis/M_S;
+    end
+    if isfield(params, 'RelTol')
+        RelTol = params.RelTol;
+    else
+        RelTol = 1e-3;
+    end
     
     rot = rotz(n);  % Rotation matrix that rotates n to the z axis
     irot = inv(rot);% Rotation matrix that rotates the z axis to n
@@ -133,33 +158,33 @@ if strcmp(mode,'neel')
             counter = counter+1;
             J(ind) = counter;
             I(ind) = counter;
-            V(ind) = -r*(r+1) + pr2* 2*(r^2+r-3*q^2)/((2*r+3)*(2*r-1));
+            V(ind) = -1/(2*tau_N)*r*(r+1) + p4*(r^2+r-3*q^2)/((2*r+3)*(2*r-1));
             %V(ind) = pr2* 2*(r^2+r-3*q^2)/((2*r+3)*(2*r-1));
             ind = ind+1;
             if q~=-r
                 if r~=0 && q~=r
                     J(ind) = counter-2*r;
                     I(ind) = counter;
-                    V(ind) = -2*1i/alpha * pr2 * q*(r-q)/(2*r-1);%!
+                    V(ind) = -1i *p3* q*(r-q)/(2*r-1);%!
                     ind = ind+1;
                 end
             end
             if r<(N-1)
                 J(ind) = counter+2*(r+1)+2*(r+2);
                 I(ind) = counter;
-                V(ind) = -pr2 * 2*r*(r+q+1)*(r+q+2)/((2*r+3)*(2*r+5));
+                V(ind) = -p4*r*(r+q+1)*(r+q+2)/((2*r+3)*(2*r+5));
                 ind = ind+1;
             end
             if r>1 && q>(-r+1)
                 J(ind) = counter-2*r-2*(r-1);
                 I(ind) = counter;
-                V(ind) = pr2 * 2*(r+1)*(r-q)*(r-q-1)/((2*r-3)*(2*r-1));
+                V(ind) = p4*(r+1)*(r-q)*(r-q-1)/((2*r-3)*(2*r-1));
                 ind = ind+1;
             end
             if r<N
                 J(ind) = counter+2*(r+1);
                 I(ind) = counter;
-                V(ind) = -2*1i/alpha * pr2 * q*(r+q+1)/(2*r+3);%!
+                V(ind) = -1i*p3 * q*(r+q+1)/(2*r+3);%!
                 ind = ind+1;
             end
         end
@@ -180,20 +205,20 @@ if strcmp(mode,'neel')
             counter = counter+1;
             J(ind) = counter;
             I(ind) = counter;
-            V(ind) = -1i/(2*alpha) * pr1 *2*q;%!
+            V(ind) = -1i/(2) * p1 *2*q;%!
             ind = ind+1;
             if q~=-r
                 if r~=0 && q~=r
                     J(ind) = counter-2*r;
                     I(ind) = counter;
-                    V(ind) = pr1*(r+1)*(r-q)/(2*r-1);
+                    V(ind) = p2*(r+1)*(r-q)/(2*r-1);
                     ind = ind+1;
                 end
             end
             if r<N
                 J(ind) = counter+2*(r+1);
                 I(ind) = counter;
-                V(ind) = -pr1*r*(r+q+1)/(2*r+3);
+                V(ind) = -p2*r*(r+q+1)/(2*r+3);
                 ind = ind+1;
             end
         end
@@ -214,19 +239,19 @@ if strcmp(mode,'neel')
             if q~=r
                 J(ind) = counter+1;
                 I(ind) = counter;
-                V(ind) = -1i/(2*alpha) * pr1 *(r-q)*(r+q+1);%!
+                V(ind) = -1i/(2) * p1 *(r-q)*(r+q+1);%!
                 ind = ind+1;
             end
             if q<(r-1)
                 J(ind) = counter-2*r+1;
                 I(ind) = counter;
-                V(ind) = pr1 * (r+1)*(r-q)*(r-q-1)/(4*r-2);
+                V(ind) = p2 * (r+1)*(r-q)*(r-q-1)/(4*r-2);
                 ind = ind+1;
             end
             if r<N
                 J(ind) = counter+2*(r+1)+1;
                 I(ind) = counter;
-                V(ind) = pr1 * r*(r+q+1)*(r+q+2)/(4*r+6);
+                V(ind) = p2 * r*(r+q+1)*(r+q+2)/(4*r+6);
                 ind = ind+1;
             end
         end
@@ -247,20 +272,20 @@ if strcmp(mode,'neel')
             if q~=-r
                 J(ind) = counter-1;
                 I(ind) = counter;
-                V(ind) = -1i/(2*alpha)*pr1;%!
+                V(ind) = -1i/(2)*p1;%!
                 ind = ind+1;
             end
             if q>(-r+1)
                 J(ind) = counter-2*r-1;
                 I(ind) = counter;
-                V(ind) = -pr1 * (r+1)/(4*r-2);
+                V(ind) = -p2 * (r+1)/(4*r-2);
                 ind = ind+1;
                 
             end
             if r<N
                 J(ind) = counter+2*(r+1)-1;
                 I(ind) = counter;
-                V(ind) = -pr1 * r/(4*r+6);
+                V(ind) = -p2 * r/(4*r+6);
                 ind = ind+1;
             end
         end
@@ -318,6 +343,18 @@ elseif strcmp(mode,'brown')
     else
         N = 20;
     end
+    if isfield(params, 'p2')
+        p2 = params.p2;
+    else
+        p2 = M_S*V_core/(6*eta*V_h);
+    end
+    if isfield(params, 'RelTol')
+        RelTol = params.RelTol;
+    else
+        RelTol = 1e-3;
+    end
+
+
         
     rot = eye(3);
     irot = eye(3);
@@ -371,7 +408,7 @@ elseif strcmp(mode,'brown')
             counter = counter+1;
             J(ind) = counter;
             I(ind) = counter;
-            V(ind) = -r*(r+1);
+            V(ind) = -1/(2*tau_B)*r*(r+1);
             ind = ind+1;
         end
     end
@@ -393,14 +430,14 @@ elseif strcmp(mode,'brown')
                 if r~=0 && q~=r
                     J(ind) = counter-2*r;
                     I(ind) = counter;
-                    V(ind) = pr1*(r+1)*(r-q)/(2*r-1);
+                    V(ind) = p2*(r+1)*(r-q)/(2*r-1);
                     ind = ind+1;
                 end
             end
             if r<N
                 J(ind) = counter+2*(r+1);
                 I(ind) = counter;
-                V(ind) = -pr1*r*(r+q+1)/(2*r+3);
+                V(ind) = -p2*r*(r+q+1)/(2*r+3);
                 ind = ind+1;
             end
         end
@@ -421,13 +458,13 @@ elseif strcmp(mode,'brown')
             if q<(r-1)
                 J(ind) = counter-2*r+1;
                 I(ind) = counter;
-                V(ind) = pr1 * (r+1)*(r-q)*(r-q-1)/(4*r-2);
+                V(ind) = p2 * (r+1)*(r-q)*(r-q-1)/(4*r-2);
                 ind = ind+1;
             end
             if r<N
                 J(ind) = counter+2*(r+1)+1;
                 I(ind) = counter;
-                V(ind) = pr1 * r*(r+q+1)*(r+q+2)/(4*r+6);
+                V(ind) = p2 * r*(r+q+1)*(r+q+2)/(4*r+6);
                 ind = ind+1;
             end
         end
@@ -448,14 +485,14 @@ elseif strcmp(mode,'brown')
             if q>(-r+1)
                 J(ind) = counter-2*r-1;
                 I(ind) = counter;
-                V(ind) = -pr1 * (r+1)/(4*r-2);
+                V(ind) = -p2 * (r+1)/(4*r-2);
                 ind = ind+1;
                 
             end
             if r<N
                 J(ind) = counter+2*(r+1)-1;
                 I(ind) = counter;
-                V(ind) = -pr1 * r/(4*r+6);
+                V(ind) = -p2 * r/(4*r+6);
                 ind = ind+1;
             end
         end
@@ -476,7 +513,7 @@ y0(1) = 1/(4*pi);
 
 % solve system
 jac = @(t,y)odesys(t,y,1, B, m_offset, m_b3, m_bp, m_bm,tau);
-opts = odeset("Vectorized", "on","Jacobian", jac, "RelTol", 1e-3);
+opts = odeset("Vectorized", "on","Jacobian", jac, "RelTol", RelTol);
 %opts = odeset( 'RelTol', 1e-3);
 rhs = @(t,y)odesys(t,y,0, B, m_offset, m_b3, m_bp, m_bm,tau);
 [t,y] = ode15s(rhs,t_vec , y0, opts);

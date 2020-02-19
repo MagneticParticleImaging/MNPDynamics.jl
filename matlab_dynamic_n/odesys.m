@@ -17,20 +17,26 @@ B_3 = B(3,:);
 if isa(n, 'function_handle')
     n = n(t);
 end
-n1 = n(1);
-n2 = n(2);
-n3 = n(3);
+if length(n)~=1
+    n1 = n(1);
+    n2 = n(2);
+    n3 = n(3);
+end
 
-M =  m_offset + B_3 .* m_b3 + (B_1 + 1i*B_2) .* m_bp + (B_1 - 1i*B_2).*m_bm...
-    +(n1^2+n2^2-2*n3^2).*m_squ + (n1-1i*n2)*n3.*m_nmin3 + (n1+1i*n2)*n3.*m_npin3...
-    +(n1-1i*n2)^2.*m_nmi + (n1+1i*n2)^2.*m_npi;
+if n==0
+    M = m_offset + B_3.*m_b3 + (B_1+1i*B_2).*m_bp + (B_1-1i*B_2).*m_bm;
+else
+    M =  m_offset + B_3 .* m_b3 + (B_1 + 1i*B_2) .* m_bp + (B_1 - 1i*B_2).*m_bm...
+        +(n1^2+n2^2-2*n3^2).*m_squ + (n1-1i*n2)*n3.*m_nmin3 + (n1+1i*n2)*n3.*m_npin3...
+        +(n1-1i*n2)^2.*m_nmi + (n1+1i*n2)^2.*m_npi;
+end
 
 
 
 if jacflag
-    dydt = (1/(2*tau_N))*M;
+    dydt = M;
 else
-    dydt = (1/(2*tau_N)) * M*y;
+    dydt = M*y;
 end
 
 end

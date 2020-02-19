@@ -69,7 +69,12 @@ if strcmp(mode,'neel')
     if isfield(params,'tau_N')
         tau_N = params.tau_N;
     else
-        tau_N = M_S*V_core/(k_B*Temp*gam_gyro)*(1+alpha^2)/(2*alpha);
+        if alpha~=Inf
+            alphat = alpha;
+        else
+            alphat = 0.1;
+        end
+        tau_N = M_S*V_core/(k_B*Temp*gam_gyro)*(1+alphat^2)/(2*alphat);
     end
     if isfield(params, 'N')
         N = params.N;
@@ -81,16 +86,41 @@ if strcmp(mode,'neel')
     else
         n = [0;0;1];
     end
+    if isfield(params, 'p1')
+        p1 = params.p1;
+    else
+        p1 = gam_gyro/(1+alpha^2);
+    end
+    if isfield(params,'p2')
+        p2 = params.p2;
+    else
+        p2 = alpha*gam_gyro/(1+alpha^2);
+    end
+    if isfield(params, 'p3')
+        p3 = params.p3;
+    else
+        p3 = 2*gam_gyro/(1+alpha^2)*kAnis/M_S;
+    end
+    if isfield(params, 'p4')
+        p4 = params.p4;
+    else
+        p4 = 2*alpha*gam_gyro/(1+alpha^2)*kAnis/M_S;
+    end
+    if isfield(params, 'RelTol')
+        RelTol = params.RelTol;
+    else
+        RelTol = 1e-3;
+    end
     
-   % rot = rotz(n);  % Rotation matrix that rotates n to the z axis
+    % rot = rotz(n);  % Rotation matrix that rotates n to the z axis
     %irot = inv(rot);% Rotation matrix that rotates the z axis to n
     rot = eye(3);
     irot = eye(3);
     
     B = @(t) rot*B(t);
     
-    pr1 = M_S*V_core/(k_B*Temp);
-    pr2 = kAnis*V_core/(k_B*Temp);
+    %pr1 = M_S*V_core/(k_B*Temp);
+    %pr2 = kAnis*V_core/(k_B*Temp);
     
     
     counter = 0;
@@ -158,37 +188,8 @@ if strcmp(mode,'neel')
             counter = counter+1;
             J(ind) = counter;
             I(ind) = counter;
-            V(ind) = -r*(r+1);
+            V(ind) = -(1/(2*tau_N))*r*(r+1);
             ind = ind+1;
-            %V(ind) = -r*(r+1) + pr2* 2*(r^2+r-3*q^2)/((2*r+3)*(2*r-1));
-            %V(ind) = pr2* 2*(r^2+r-3*q^2)/((2*r+3)*(2*r-1));
-%             ind = ind+1;
-%             if q~=-r
-%                 if r~=0 && q~=r
-%                     J(ind) = counter-2*r;
-%                     I(ind) = counter;
-%                     V(ind) = 2*1i/alpha * pr2 * q*(r-q)/(2*r-1);
-%                     ind = ind+1;
-%                 end
-%             end
-%             if r<(N-1)
-%                 J(ind) = counter+2*(r+1)+2*(r+2);
-%                 I(ind) = counter;
-%                 V(ind) = -pr2 * 2*r*(r+q+1)*(r+q+2)/((2*r+3)*(2*r+5));
-%                 ind = ind+1;
-%             end
-%             if r>1 && q>(-r+1)
-%                 J(ind) = counter-2*r-2*(r-1);
-%                 I(ind) = counter;
-%                 V(ind) = pr2 * 2*(r+1)*(r-q)*(r-q-1)/((2*r-3)*(2*r-1));
-%                 ind = ind+1;
-%             end
-%             if r<N
-%                 J(ind) = counter+2*(r+1);
-%                 I(ind) = counter;
-%                 V(ind) = 2*1i/alpha * pr2 * q*(r+q+1)/(2*r+3);
-%                 ind = ind+1;
-%             end
         end
     end
     J = nonzeros(J);
@@ -207,20 +208,20 @@ if strcmp(mode,'neel')
             counter = counter+1;
             J(ind) = counter;
             I(ind) = counter;
-            V(ind) = -1i/(2*alpha) * pr1 *2*q; %MINUS FRAGLICH
+            V(ind) = -1i/(2) * p1 *2*q; %MINUS FRAGLICH
             ind = ind+1;
             if isvalid(counter, 0, -1)%q~=-r
                 %if r~=0 && q~=r
-                    J(ind) = counter+dc(counter,0,-1);%-2*r;
-                    I(ind) = counter;
-                    V(ind) = pr1*(r+1)*(r-q)/(2*r-1);
-                    ind = ind+1;
+                J(ind) = counter+dc(counter,0,-1);%-2*r;
+                I(ind) = counter;
+                V(ind) = p2*(r+1)*(r-q)/(2*r-1);
+                ind = ind+1;
                 %end
             end
             if isvalid(counter, 0, 1)%r<N
                 J(ind) = counter+dc(counter,0,1);%2*(r+1);
                 I(ind) = counter;
-                V(ind) = -pr1*r*(r+q+1)/(2*r+3);
+                V(ind) = -p2*r*(r+q+1)/(2*r+3);
                 ind = ind+1;
             end
         end
@@ -241,19 +242,19 @@ if strcmp(mode,'neel')
             if isvalid(counter, 1,0)%q~=r
                 J(ind) = counter+dc(counter,1,0);%1;
                 I(ind) = counter;
-                V(ind) = -1i/(2*alpha) * pr1 *(r-q)*(r+q+1);%MINUS FRAGLICH
+                V(ind) = -1i/(2) * p1 *(r-q)*(r+q+1);%MINUS FRAGLICH
                 ind = ind+1;
             end
             if isvalid(counter, 1,-1)%q<(r-1)
                 J(ind) = counter+dc(counter,1,-1);%-2*r+1;
                 I(ind) = counter;
-                V(ind) = pr1 * (r+1)*(r-q)*(r-q-1)/(4*r-2);
+                V(ind) = p2 * (r+1)*(r-q)*(r-q-1)/(4*r-2);
                 ind = ind+1;
             end
             if isvalid(counter, 1, 1)%r<N
                 J(ind) = counter+dc(counter,1,1);%2*(r+1)+1;
                 I(ind) = counter;
-                V(ind) = pr1 * r*(r+q+1)*(r+q+2)/(4*r+6);
+                V(ind) = p2 * r*(r+q+1)*(r+q+2)/(4*r+6);
                 ind = ind+1;
             end
         end
@@ -274,20 +275,20 @@ if strcmp(mode,'neel')
             if isvalid(counter, -1,0)%q~=-r
                 J(ind) = counter+dc(counter,-1,0);%-1;
                 I(ind) = counter;
-                V(ind) = -1i/(2*alpha)*pr1;% MINUS  FRAGLICH
+                V(ind) = -1i/(2)*p1;% MINUS  FRAGLICH
                 ind = ind+1;
             end
             if isvalid(counter, -1,-1)%q>(-r+1)
                 J(ind) = counter+dc(counter,-1,-1);%-2*r-1;
                 I(ind) = counter;
-                V(ind) = -pr1 * (r+1)/(4*r-2);
+                V(ind) = -p2 * (r+1)/(4*r-2);
                 ind = ind+1;
                 
             end
             if isvalid(counter,-1,1)%r<N
                 J(ind) = counter+dc(counter,-1,1);%2*(r+1)-1;
                 I(ind) = counter;
-                V(ind) = -pr1 * r/(4*r+6);
+                V(ind) = -p2 * r/(4*r+6);
                 ind = ind+1;
             end
         end
@@ -308,32 +309,32 @@ if strcmp(mode,'neel')
             counter = counter+1;
             J(ind) = counter;
             I(ind) = counter;
-            V(ind) = -2*pr2*(r^2+r-3*q^2)/(2*(2*r-1)*(2*r+3));
+            V(ind) = -p4*(r^2+r-3*q^2)/(2*(2*r-1)*(2*r+3));
             ind = ind+1;
             if isvalid(counter, 0, -1)%q~=-r
                 %if r~=0 && q~=r
-                    J(ind) = counter+dc(counter,0,-1);%-2*r;
-                    I(ind) = counter;
-                    V(ind) = 2*1i/alpha * pr2*(r-q)*q/(2*(2*r-1));% MINUS FRAGLICH
-                    ind = ind+1;
+                J(ind) = counter+dc(counter,0,-1);%-2*r;
+                I(ind) = counter;
+                V(ind) = 1i * p3*(r-q)*q/(2*(2*r-1));% MINUS FRAGLICH
+                ind = ind+1;
                 %end
             end
             if isvalid(counter, 0,2)%r<(N-1)
                 J(ind) = counter+dc(counter,0,2);%2*(r+1)+2*(r+2);
                 I(ind) = counter;
-                V(ind) = 2*pr2 *r*(r+q+1)*(r+q+2)/((4*r+6)*(2*r+5));
+                V(ind) = p4 *r*(r+q+1)*(r+q+2)/((4*r+6)*(2*r+5));
                 ind = ind+1;
             end
             if isvalid(counter, 0,-2)%r>1 && q>(-r+1) && q<(r-1) %VER?NDERT
                 J(ind) = counter+dc(counter,0,-2);%-2*r-2*(r-1);
                 I(ind) = counter;
-                V(ind) = 2*pr2 * (r+1)*(r-q)*(q-r+1)/(2*(2*r-3)*(2*r-1));
+                V(ind) = p4 * (r+1)*(r-q)*(q-r+1)/(2*(2*r-3)*(2*r-1));
                 ind = ind+1;
             end
             if isvalid(counter, 0, 1)%r<N
                 J(ind) = counter+dc(counter,0,1);%2*(r+1);
                 I(ind) = counter;
-                V(ind) = 2*1i/alpha * pr2 * q*(r+q+1)/(2*(2*r+3));% MINUS FRAGLICH
+                V(ind) = 1i* p3 * q*(r+q+1)/(2*(2*r+3));% MINUS FRAGLICH
                 ind = ind+1;
             end
         end
@@ -356,31 +357,31 @@ if strcmp(mode,'neel')
             if isvalid(counter,-1,0)%q~=-r
                 J(ind) = counter+dc(counter,-1,0);%-1;
                 I(ind) = counter;
-                V(ind) = -2*pr2*3*(2*q-1)/(2*(2*r-1)*(2*r+3));
+                V(ind) = -p4*3*(2*q-1)/(2*(2*r-1)*(2*r+3));
                 ind = ind+1;
             end
             if isvalid(counter,-1,-1)%r>1 && q>(-r+1)
                 J(ind) = counter+dc(counter,-1,-1);%-2*r-1;
                 I(ind) = counter;
-                V(ind) = 2*1i/alpha*pr2*(2*q-r-1)/(2*(2*r-1));
+                V(ind) = 1i*p3*(2*q-r-1)/(2*(2*r-1));
                 ind = ind+1;
             end
             if isvalid(counter,-1,1)%r<N
                 J(ind) = counter+dc(counter,-1,1);%2*(r+1)-1;
                 I(ind) = counter;
-                V(ind) = -2*1i/alpha * pr2 * (2*q+r)/(2*(2*r+3));
+                V(ind) = -1i * p3 * (2*q+r)/(2*(2*r+3));
                 ind = ind+1;
             end
             if isvalid(counter,-1,2)%r<(N-1)
                 J(ind) = counter+dc(counter,-1,2);%2*(r+1)+2*(r+2)-1;
                 I(ind) = counter;
-                V(ind) = -2*pr2*r*(r+q+1)/((2*r+3)*(2*r+5));
+                V(ind) = -p4*r*(r+q+1)/((2*r+3)*(2*r+5));
                 ind = ind+1;
             end
             if isvalid(counter,-1,-2)%r>2 && q>(-r+2) && q<r %VER?NDERT
                 J(ind) = counter+dc(counter,-1,-2);%-2*r-2*(r-1)-1;
                 I(ind) = counter;
-                V(ind) = -2*pr2*(r-q)*(r+1)/((2*r-1)*(2*r-3));
+                V(ind) = -p4*(r-q)*(r+1)/((2*r-1)*(2*r-3));
                 ind = ind+1;
             end
         end
@@ -403,31 +404,31 @@ if strcmp(mode,'neel')
             if isvalid(counter,1,0)%q~=r
                 J(ind) = counter+dc(counter,1,0);%1;
                 I(ind) = counter;
-                V(ind) = -2*pr2*3*(2*q+1)*(r-q)*(r+q+1)/(2*(2*r-1)*(2*r+3));
+                V(ind) = -p4*3*(2*q+1)*(r-q)*(r+q+1)/(2*(2*r-1)*(2*r+3));
                 ind = ind+1;
             end
             if isvalid(counter,1,-1)%r>1 && q<(r-1)
                 J(ind) = counter+dc(counter,1,-1);%-2*r+1;
                 I(ind) = counter;
-                V(ind) = -2*1i/alpha*pr2*(r-q)*(r-q-1)*(2*q+r+1)/(2*(2*r-1));
+                V(ind) = -1i*p3*(r-q)*(r-q-1)*(2*q+r+1)/(2*(2*r-1));
                 ind = ind+1;
             end
             if isvalid(counter,1,1)%r<N
                 J(ind) = counter+dc(counter,1,1);%2*(r+1)+1;
                 I(ind) = counter;
-                V(ind) = 2*1i/alpha * pr2 * (2*q-r)*(r+q+1)*(r+q+2)/(2*(2*r+3));
+                V(ind) = 1i * p3 * (2*q-r)*(r+q+1)*(r+q+2)/(2*(2*r+3));
                 ind = ind+1;
             end
             if isvalid(counter,1,2)%r<(N-1)
                 J(ind) = counter+dc(counter,1,2);%2*(r+1)+2*(r+2)+1;
                 I(ind) = counter;
-                V(ind) = 2*pr2*r*(r+q+1)*(r+q+2)*(r+q+3)/((2*r+5)*(2*r+3));
+                V(ind) = p4*r*(r+q+1)*(r+q+2)*(r+q+3)/((2*r+5)*(2*r+3));
                 ind = ind+1;
             end
             if isvalid(counter,1,-2)%r>2 && q<(r-2) && q>-r %VER?NDERT
                 J(ind) = counter+dc(counter,1,-2);%-2*r-2*(r-1)+1;
                 I(ind) = counter;
-                V(ind) = 2*pr2*(r+1)*(r-q)*(r-q-2)*(r-q-1)/((2*r-3)*(2*r-1));
+                V(ind) = p4*(r+1)*(r-q)*(r-q-2)*(r-q-1)/((2*r-3)*(2*r-1));
                 ind = ind+1;
             end
         end
@@ -450,31 +451,31 @@ if strcmp(mode,'neel')
             if isvalid(counter,-2,1)%r<N && q>-r
                 J(ind) = counter+dc(counter,-2,1);%2*(r+1)-2;
                 I(ind) = counter;
-                V(ind) = -2*1i/alpha*pr2/(4*(2*r+3));
+                V(ind) = -1i*p3/(4*(2*r+3));
                 ind = ind+1;
             end
             if isvalid(counter,-2,-1)%r>0 && q>(-r+2)
                 J(ind) = counter+dc(counter,-2,-1);%-2*r-2;
                 I(ind) = counter;
-                V(ind) = 2*1i/alpha*pr2/(4*(2*r-1));
+                V(ind) = 1i*p3/(4*(2*r-1));
                 ind = ind+1;
             end
             if isvalid(counter,-2,-2)%r>1 && q>(-r+3)
                 J(ind) = counter+dc(counter,-2,-2);%-2*r-2*(r-1)-2;
                 I(ind) = counter;
-                V(ind) = 2*pr2*(r+1)/(2*(2*r-3)*(4*r-2));
+                V(ind) = p4*(r+1)/(2*(2*r-3)*(4*r-2));
                 ind = ind+1;
             end
             if isvalid(counter,-2,2)%r<(N-1)
                 J(ind) = counter+dc(counter,-2,2);%2*(r+1)+2*(r+2)-2;
                 I(ind) = counter;
-                V(ind) = -2*pr2*r/(2*(2*r+5)*(4*r+6));
+                V(ind) = -p4*r/(2*(2*r+5)*(4*r+6));
                 ind = ind+1;
             end
             if isvalid(counter,-2,0)%q>(-r+1)
                 J(ind) = counter+dc(counter,-2,0);%-2;
                 I(ind) = counter;
-                V(ind) = -2*pr2*3/(4*(2*r-1)*(2*r+3));
+                V(ind) = -p4*3/(4*(2*r-1)*(2*r+3));
                 ind = ind+1;
             end
         end
@@ -496,31 +497,32 @@ if strcmp(mode,'neel')
             if isvalid(counter,2,1)%r<N && q<r
                 J(ind) = counter+dc(counter,2,1);%2*(r+1)+2;
                 I(ind) = counter;
-                V(ind) = 2*1i/alpha*pr2*(r-q)*(r+q+1)*(r+q+2)*(r+q+3)/(4*(2*r+3));
+                V(ind) = 1i*p3*(r-q)*(r+q+1)*(r+q+2)*(r+q+3)/(4*(2*r+3));
                 ind = ind+1;
             end
             if isvalid(counter,2,-1)%r>0 && q<(r-2)
                 J(ind) = counter+dc(counter,2,-1);%-2*r+2;
                 I(ind) = counter;
-                V(ind) = -2*1i/alpha*pr2*(r-q)*(r+q+1)*(q-r+1)*(q-r+2)/(4*(2*r-1));
+                %V(ind) = -1i*p3*(r-q)*(r+q+1)*(q-r+1)*(q-r+2)/(4*(2*r-1));
+                V(ind) = -1i*p3*(r-q)*(r-q-1)*(r-q-2)*(r+q+1)/(4*(2*r-1));
                 ind = ind+1;
             end
             if isvalid(counter,2,-2)%r>1 && q<(r-3)
                 J(ind) = counter+dc(counter,2,-2);%-2*r-2*(r-1)+2;
                 I(ind) = counter;
-                V(ind) = 2*pr2*(r+1)*(r-q)*(r-q-3)*(r-q-2)*(r-q-1)/(4*(2*r-3)*(2*r-1));
+                V(ind) = p4*(r+1)*(r-q)*(r-q-3)*(r-q-2)*(r-q-1)/(4*(2*r-3)*(2*r-1));
                 ind = ind+1;
             end
             if isvalid(counter,2,2)%r<(N-1)
                 J(ind) = counter+dc(counter,2,2);%2*(r+1)+2*(r+2)+2;
                 I(ind) = counter;
-                V(ind) = -2*pr2*r*(r+q+1)*(r+q+2)*(r+q+3)*(r+q+4)/(2*(2*r+5)*(4*r+6));
+                V(ind) = -p4*r*(r+q+1)*(r+q+2)*(r+q+3)*(r+q+4)/(2*(2*r+5)*(4*r+6));
                 ind = ind+1;
             end
             if isvalid(counter,2,0)%q<(r-1)
                 J(ind) = counter+dc(counter,2,0);%2;
                 I(ind) = counter;
-                V(ind) = -2*pr2*3*(r-q)*(r-q-1)*(r+q+1)*(r+q+2)/(4*(2*r-1)*(2*r+3));
+                V(ind) = -p4*3*(r-q)*(r-q-1)*(r+q+1)*(r+q+2)/(4*(2*r-1)*(2*r+3));
                 ind = ind+1;
             end
         end
@@ -577,11 +579,21 @@ elseif strcmp(mode,'brown')
     else
         N = 20;
     end
-    
+    if isfield(params, 'p2')
+        p2 = params.p2;
+    else
+        p2 = M_S*V_core/(6*eta*V_h);
+    end
+    if isfield(params, 'RelTol')
+        RelTol = params.RelTol;
+    else
+        RelTol = 1e-3;
+    end
+
     rot = eye(3);
     irot = eye(3);
     
-    pr1 = M_S*V_core/(k_B*Temp);
+    %pr1 = M_S*V_core/(k_B*Temp);
     
     counter = 0;
     nz = 0;
@@ -630,7 +642,7 @@ elseif strcmp(mode,'brown')
             counter = counter+1;
             J(ind) = counter;
             I(ind) = counter;
-            V(ind) = -r*(r+1);
+            V(ind) = -1/(2*tau_B)*r*(r+1);
             ind = ind+1;
         end
     end
@@ -652,14 +664,14 @@ elseif strcmp(mode,'brown')
                 if r~=0 && q~=r
                     J(ind) = counter-2*r;
                     I(ind) = counter;
-                    V(ind) = pr1*(r+1)*(r-q)/(2*r-1);
+                    V(ind) = p2*(r+1)*(r-q)/(2*r-1);
                     ind = ind+1;
                 end
             end
             if r<N
                 J(ind) = counter+2*(r+1);
                 I(ind) = counter;
-                V(ind) = -pr1*r*(r+q+1)/(2*r+3);
+                V(ind) = -p2*r*(r+q+1)/(2*r+3);
                 ind = ind+1;
             end
         end
@@ -680,13 +692,13 @@ elseif strcmp(mode,'brown')
             if q<(r-1)
                 J(ind) = counter-2*r+1;
                 I(ind) = counter;
-                V(ind) = pr1 * (r+1)*(r-q)*(r-q-1)/(4*r-2);
+                V(ind) = p2 * (r+1)*(r-q)*(r-q-1)/(4*r-2);
                 ind = ind+1;
             end
             if r<N
                 J(ind) = counter+2*(r+1)+1;
                 I(ind) = counter;
-                V(ind) = pr1 * r*(r+q+1)*(r+q+2)/(4*r+6);
+                V(ind) = p2 * r*(r+q+1)*(r+q+2)/(4*r+6);
                 ind = ind+1;
             end
         end
@@ -707,14 +719,14 @@ elseif strcmp(mode,'brown')
             if q>(-r+1)
                 J(ind) = counter-2*r-1;
                 I(ind) = counter;
-                V(ind) = -pr1 * (r+1)/(4*r-2);
+                V(ind) = -p2 * (r+1)/(4*r-2);
                 ind = ind+1;
                 
             end
             if r<N
                 J(ind) = counter+2*(r+1)-1;
                 I(ind) = counter;
-                V(ind) = -pr1 * r/(4*r+6);
+                V(ind) = -p2 * r/(4*r+6);
                 ind = ind+1;
             end
         end
@@ -736,7 +748,7 @@ if strcmp(mode,'neel')
     % solve system
     jac = @(t,y)odesys(t,y,1, B, n,m_offset, m_b3, m_bp, m_bm,m_squ,m_nmin3,m_npin3,m_nmi,m_npi,tau);
     %jac = @(t,y)odesys_new(t,y,1,B,n,tau, pr1, pr2, alpha,N);
-    opts = odeset("Vectorized", "on","Jacobian", jac, "RelTol", 1e-3);
+    opts = odeset("Vectorized", "on","Jacobian", jac, "RelTol", RelTol);
     %opts = odeset( 'RelTol', 1e-3);
     rhs = @(t,y)odesys(t,y,0, B, n,m_offset, m_b3, m_bp, m_bm,m_squ,m_nmin3,m_npin3,m_nmi,m_npi,tau);
     %rhs = @(t,y)odesys_new(t,y,0,B,n,tau,pr1,pr2,alpha,N);
@@ -745,20 +757,20 @@ if strcmp(mode,'neel')
     % Calculate expectation from spherical harmonics
     xexptemp = real((4*pi/3)*(.5*y(:,2)-y(:,4)));
     %xexptemp = real((4*pi/3)*(y(:,2)-.5*y(:,4)));
-%     disp(sum(abs(imag((4*pi/3)*(y(:,2)-.5*y(:,4))))))
-%     disp(sum(abs(real((4*pi/3)*(y(:,2)-.5*y(:,4))))))
+    %     disp(sum(abs(imag((4*pi/3)*(y(:,2)-.5*y(:,4))))))
+    %     disp(sum(abs(real((4*pi/3)*(y(:,2)-.5*y(:,4))))))
     yexptemp = real(-1i*(4*pi/3)*(y(:,4)+.5*y(:,2)));
     %yexptemp = real(1i*(4*pi/3)*(y(:,2)+.5*y(:,4)));
-%     disp(sum(abs(imag(1i*(4*pi/3)*(y(:,2)+.5*y(:,4))))))
-%     disp(sum(abs(real(1i*(4*pi/3)*(y(:,2)+.5*y(:,4))))))
+    %     disp(sum(abs(imag(1i*(4*pi/3)*(y(:,2)+.5*y(:,4))))))
+    %     disp(sum(abs(real(1i*(4*pi/3)*(y(:,2)+.5*y(:,4))))))
     zexptemp = real((4*pi/3)*y(:,3));
-%     disp(sum(real((4*pi/3)*y(:,3))))
-%     disp(sum(imag((4*pi/3)*y(:,3))))
+    %     disp(sum(real((4*pi/3)*y(:,3))))
+    %     disp(sum(imag((4*pi/3)*y(:,3))))
     % Rotate the coordinate system back (solver only works for the z-axis as
     % the easy axis)
-%     xexp = irot(1,1)*xexptemp + irot(1,2)*yexptemp + irot(1,3)*zexptemp;
-%     yexp = irot(2,1)*xexptemp + irot(2,2)*yexptemp + irot(2,3)*zexptemp;
-%     zexp = irot(3,1)*xexptemp + irot(3,2)*yexptemp + irot(3,3)*zexptemp;
+    %     xexp = irot(1,1)*xexptemp + irot(1,2)*yexptemp + irot(1,3)*zexptemp;
+    %     yexp = irot(2,1)*xexptemp + irot(2,2)*yexptemp + irot(2,3)*zexptemp;
+    %     zexp = irot(3,1)*xexptemp + irot(3,2)*yexptemp + irot(3,3)*zexptemp;
     
     exp = [xexptemp, yexptemp, zexptemp];
     
@@ -769,10 +781,10 @@ else
     y0(1) = 1/(4*pi);
     
     % solve system
-    jac = @(t,y)odesys(t,y,1, B, m_offset, m_b3, m_bp, m_bm,tau);
-    opts = odeset("Vectorized", "on","Jacobian", jac, "RelTol", 1e-3);
+    jac = @(t,y)odesys(t,y,1, B,0, m_offset, m_b3, m_bp, m_bm,0,0,0,0,0,tau);
+    opts = odeset("Vectorized", "on","Jacobian", jac, "RelTol", RelTol);
     %opts = odeset( 'RelTol', 1e-3);
-    rhs = @(t,y)odesys(t,y,0, B, m_offset, m_b3, m_bp, m_bm,tau);
+    rhs = @(t,y)odesys(t,y,0, B,0, m_offset, m_b3, m_bp, m_bm,0,0,0,0,0,tau);
     [t,y] = ode15s(rhs,t_vec , y0, opts);
     
     % Calculate expectation from spherical harmonics
@@ -787,7 +799,7 @@ else
     xexp = irot(1,1)*xexptemp + irot(1,2)*yexptemp + irot(1,3)*zexptemp;
     yexp = irot(2,1)*xexptemp + irot(2,2)*yexptemp + irot(2,3)*zexptemp;
     zexp = irot(3,1)*xexptemp + irot(3,2)*yexptemp + irot(3,3)*zexptemp;
-     
+    
     exp = [xexp, yexp, zexp];
 end
 end
