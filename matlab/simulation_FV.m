@@ -14,7 +14,7 @@ else
     M_S = 474000;
 end
 if isfield(params, 'D_core')
-    D_core = params.D;
+    D_core = params.D_core;
 else
     D_core = 20e-9;
 end
