@@ -9,8 +9,10 @@ params.kAnis = 11000;
 %params.n = [0;0;1];
 f = 25000;
 %params.n = @(t) [cos(2*pi*f*t);sin(2*pi*f*t);0];
-%B =@(t)0.012*[cos(.34*2*pi*f*t)-.05;sin(.7*2*pi*f*t)+.1;sin(2*pi*f*t)];
-B = @(t)0.012*[0;0;sin(2*pi*f*t)];
+B =@(t)0.012*[cos(.34*2*pi*f*t)-.05;sin(.7*2*pi*f*t)+.1;sin(2*pi*f*t)];
+params.p1 = 0;
+params.p3 = 0;
+%B = @(t)0.012*[0;0;sin(2*pi*f*t)];
 
 t = linspace(0,4/f, 1000);
 
