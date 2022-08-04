@@ -9,7 +9,7 @@ t_length = 1000;       # length of time vector
 t_max = 2/25000;       # maximum evaluation time in seconds
 N = 20;                # maximum spherical harmonics index to be considered
 n = [1;0;0];           # anisotropy axis
-reltol = 1e-3
+reltol = 1e-4
 abstol = 1e-6
 
 t = range(0,stop=t_max,length=t_length);

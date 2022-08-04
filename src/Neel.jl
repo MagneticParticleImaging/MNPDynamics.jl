@@ -15,12 +15,17 @@ struct NeelParams
 end
 
 function neel_odesys(y_out, y, p, t)
-#@time begin
   B_ = p.B(t);
   B_1 = B_[1];
   B_2 = B_[2];
   B_3 = B_[3];
 
+  neel_odesys_inner(y_out, y, p, B_1, B_2, B_3)
+
+  return 
+end
+
+function neel_odesys_inner(y_out, y, p, B_1, B_2, B_3)
   y_out .= 0.0
   mul!(p.ytmp, p.m_bm, y)
   y_out .+= (B_1 - 1im*B_2) .* p.ytmp
@@ -29,27 +34,32 @@ function neel_odesys(y_out, y, p, t)
   mul!(p.ytmp, p.m_b3, y)
   y_out .+= B_3 .* p.ytmp
   mul!(p.ytmp, p.m_offset, y)
-  y_out .+= p.ytmp 
+  y_out .+= p.ytmp
 
-  #=M = p.m_offset + B_3 .* p.m_b3 + (B_1 + 1im*B_2) .* p.m_bp + (B_1 - 1im*B_2) .* p.m_bm;
-  dydt =  M*y;
-  y_out .= dydt=#
+  # M = p.m_offset + B_3 .* p.m_b3 + (B_1 + 1im*B_2) .* p.m_bp + (B_1 - 1im*B_2) .* p.m_bm;
+  # y_out .= M*y
 
-#end
   return 
 end
 
 
+
 function neel_odesys_jac(y_out, y, p, t)
-#@time begin
   B_ = p.B(t);
   B_1 = B_[1];
   B_2 = B_[2];
   B_3 = B_[3];
 
   
-  #M = p.m_offset + B_3 .* p.m_b3 + (B_1 + 1im*B_2) .* p.m_bp + (B_1 - 1im*B_2).*p.m_bm;
-  #y_out .= M
+  neel_odesys_jac_inner(y_out, y, p, B_1, B_2, B_3)
+  
+  return 
+end
+
+function neel_odesys_jac_inner(y_out, y, p, B_1, B_2, B_3)
+
+  # M = p.m_offset + B_3 .* p.m_b3 + (B_1 + 1im*B_2) .* p.m_bp + (B_1 - 1im*B_2).*p.m_bm;
+  # y_out .= M
   
   
   y_out.nzval .= 0
@@ -58,7 +68,6 @@ function neel_odesys_jac(y_out, y, p, t)
   y_out.nzval[p.idx_b3] .+= B_3 .* p.m_b3.nzval
   y_out.nzval[p.idx_offset] .+= p.m_offset.nzval
   
-  #end
   return 
 end
 
@@ -111,7 +120,6 @@ function generateSparseMatrices(N, p1, p2, p3, p4, tauN)
         I[ind] = counter;
         J[ind] = counter;
         V[ind] = -1/(2*tauN)*r*(r+1) + p4*(r^2+r-3*q^2)/((2*r+3)*(2*r-1));
-        #V[ind] = -r*(r+1) + pr2* 2*(r^2+r-3*q^2)/((2*r+3)*(2*r-1));
         ind = ind+1;
         if q!=-r
             if r!=0 && q!=r
@@ -301,11 +309,11 @@ function simulationMNP(Bb, t_vec;
   ff = ODEFunction(neel_odesys, jac = neel_odesys_jac, jac_prototype = Mzero)
   prob = ODEProblem(ff, y0, (t_vec[1],t_vec[end]), p)
 
- # @time sol = solve(prob, QNDF(), reltol=reltol,abstol=abstol)
+  @time sol = solve(prob, QNDF(), reltol=reltol,abstol=abstol)
   #@time sol = solve(prob, CVODE_BDF(), reltol=reltol,abstol=abstol)
   #@time sol = solve(prob, Rosenbrock23(autodiff=false), reltol=reltol)
  # @time sol = solve(prob, Rodas5(autodiff=false, linsolve=KLUFactorization(reuse_symbolic=false)), dt=1e-3, reltol=reltol)
-  @time sol = solve(prob, Rodas5(autodiff=false), dt=1e-3, reltol=reltol)
+ # @time sol = solve(prob, Rodas5(autodiff=false), dt=1e-3, reltol=reltol)
   #@time sol = solve(prob, TRBDF2(autodiff=false), dt=1e-3, reltol=reltol)
   #@time sol = solve(prob, Rodas5(autodiff=false), reltol=reltol)
 
