@@ -6,6 +6,11 @@ using OrdinaryDiffEq
 using SparseDiffTools
 using LinearSolve
 
+using Distributed
+using SharedArrays
+
+using ProgressMeter
+
 #import Pardiso
 #using Sundials
 

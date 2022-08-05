@@ -1,4 +1,4 @@
-export rotz, simulationMNP
+export rotz, simulationMNP, simulationMNPMultiOffsets
 
 struct MNPSimulationParams
   B::Function
@@ -69,6 +69,15 @@ function neel_odesys_jac_inner(y_out, y, p, B_1, B_2, B_3)
   return 
 end
 
+function getIdxInM(M, V)
+  M.nzval .= -1.0
+  V.nzval .= 2.0
+  M .+= V
+  idx = findall(a-> real(a) > 0, M.nzval)
+  return idx
+end
+
+###############
 
 function simulationMNP(Bb::g, tVec;
                        relaxation::RelaxationType = NEEL,
@@ -143,7 +152,7 @@ function simulationMNP(Bb::g, tVec;
   #sol = solve(prob, QNDF(), reltol=reltol, abstol=abstol)
   sol = solve(prob, FBDF(), reltol=reltol, abstol=abstol)
   #sol = solve(prob, Rodas5(autodiff=false), reltol=reltol)
-  
+
   #@time sol = solve(prob, CVODE_BDF(), reltol=reltol,abstol=abstol)
   #@time sol = solve(prob, Rosenbrock23(autodiff=false), reltol=reltol)
  # @time sol = solve(prob, Rodas5(autodiff=false, linsolve=KLUFactorization(reuse_symbolic=false)), dt=1e-3, reltol=reltol)
@@ -178,10 +187,20 @@ function simulationMNP(Bb::g, tVec;
 end
 
 
-function getIdxInM(M, V)
-  M.nzval .= -1.0
-  V.nzval .= 2.0
-  M .+= V
-  idx = findall(a-> real(a) > 0, M.nzval)
-  return idx
+##################################
+
+function simulationMNPMultiOffsets(B::g, t, offsets::Vector{NTuple{3,Float64}}; kargs...) where g 
+
+  M = size(offsets,1)
+
+  magnetizations = SharedArray{Float64}(length(t), 3, M)
+
+  @sync @showprogress @distributed for m=1:M
+      B_ = t -> ( B(t) .+ offsets[m] )
+      t, y = simulationMNP(B_, t; kargs...)
+
+      magnetizations[:,:,m] .= y
+  end
+
+  return magnetizations
 end
