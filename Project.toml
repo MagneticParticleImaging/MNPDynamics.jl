@@ -1,6 +1,6 @@
 name = "MNPDynamics"
 uuid = "f81e04c9-20b8-526d-9626-780ee78293fb"
-authors = ["Tobias Knopp <tobias@knoppweb.de>"]
+authors = ["Tobias Knopp <tobias@knoppweb.de>, Hannes Albers, Tobias Kluth"]
 version = "0.1.0"
 
 [deps]

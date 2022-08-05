@@ -10,7 +10,8 @@ using LinearSolve
 #using Sundials
 
 include("utils.jl")
-include("Neel.jl")
-include("Brown.jl")
+include("sparseMatrixSetup.jl")
+include("simulation.jl")
+
 
 end # module

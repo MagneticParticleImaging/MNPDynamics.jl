@@ -16,8 +16,8 @@ fy = 2.5e6 / 96
 fz = 2.5e6 / 99
 
 samplingRate = 2.5e6
-tLength = lcm(96,99,102);             # length of time vector
-tMax = tLength / samplingRate; # maximum evaluation time in seconds
+tLength = lcm(96,99,102);       # length of time vector
+tMax = tLength / samplingRate;  # maximum evaluation time in seconds
 
 @info tMax 
 @info tLength
