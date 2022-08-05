@@ -71,6 +71,7 @@ end
 
 
 function simulationMNP(Bb, t_vec;
+                       relaxation::RelaxationType = NEEL,
                        n = [0.0;0.0;1.0], 
                        MS = 474000.0, 
                        DCore = 20e-9, DHydro = DCore,
@@ -86,7 +87,7 @@ function simulationMNP(Bb, t_vec;
   
   
 
-  if true ## neel
+  if relaxation == NEEL
     τNeel = MS*VCore/(kB*temp*gamGyro)*(1+α^2)/(2*α)
     p1 = gamGyro/(1+α^2);
     p2 = α*gamGyro/(1+α^2);
@@ -96,13 +97,15 @@ function simulationMNP(Bb, t_vec;
     rot = rotz(n)   # Rotation matrix that rotates n to the z axis
     irot = inv(rot) # Rotation matrix that rotates the z axis to n
     m_offset, m_b3, m_bp, m_bm = generateSparseMatricesNeel(N, p1, p2, p3, p4, τNeel)
-  else
+  elseif relaxation == BROWN
     τBrown = 3*η*VHydro/(kB*temp)
     p2 = MS*VCore/(6*η*VHydro);
 
     rot = diagm([1,1,1])
     irot = diagm([1,1,1])
     m_offset, m_b3, m_bp, m_bm = generateSparseMatricesBrown(N, p2, τBrown)
+  else
+    error("Parameter relaxation needs to be either NEEL or BROWN!")
   end
 
   # initial value
