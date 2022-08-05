@@ -70,7 +70,7 @@ function neel_odesys_jac_inner(y_out, y, p, B_1, B_2, B_3)
 end
 
 
-function simulationMNP(Bb, t_vec;
+function simulationMNP(Bb::g, tVec;
                        relaxation::RelaxationType = NEEL,
                        n = [0.0;0.0;1.0], 
                        MS = 474000.0, 
@@ -78,7 +78,8 @@ function simulationMNP(Bb, t_vec;
                        temp = 293.0, α = 0.1, kAnis = 625,
                        η = 1e-3,
                        N = 20,
-                       reltol = 1e-3, abstol=1e-6)
+                       tWarmup = 0.00005,
+                       reltol = 1e-3, abstol=1e-6) where g
 
   kB = 1.38064852e-23
   gamGyro = 1.75*10^11
@@ -136,25 +137,30 @@ function simulationMNP(Bb, t_vec;
   p = MNPSimulationParams(BbRot, m_offset, m_b3, m_bp, m_bm, ytmp, idx_offset, idx_b3, idx_bp, idx_bm)
 
   ff = ODEFunction(neel_odesys, jac = neel_odesys_jac, jac_prototype = Mzero)
-  prob = ODEProblem(ff, y0, (t_vec[1],t_vec[end]), p)
+  prob = ODEProblem(ff, y0, (tVec[1]-tWarmup, tVec[end]), p)
 
-  @time sol = solve(prob, QNDF(), reltol=reltol,abstol=abstol)
+  #@time 
+  #sol = solve(prob, QNDF(), reltol=reltol, abstol=abstol)
+  sol = solve(prob, FBDF(), reltol=reltol, abstol=abstol)
+  #sol = solve(prob, Rodas5(autodiff=false), reltol=reltol)
+  
   #@time sol = solve(prob, CVODE_BDF(), reltol=reltol,abstol=abstol)
   #@time sol = solve(prob, Rosenbrock23(autodiff=false), reltol=reltol)
  # @time sol = solve(prob, Rodas5(autodiff=false, linsolve=KLUFactorization(reuse_symbolic=false)), dt=1e-3, reltol=reltol)
  # @time sol = solve(prob, Rodas5(autodiff=false), dt=1e-3, reltol=reltol)
   #@time sol = solve(prob, TRBDF2(autodiff=false), dt=1e-3, reltol=reltol)
-  #@time sol = solve(prob, Rodas5(autodiff=false), reltol=reltol)
+  #@time 
+
 
   #@time sol = solve(prob, Rodas5(autodiff=false, linsolve=KLUFactorization(reuse_symbolic=false)), reltol=1e-3)
 
   
-  @show sol.destats
+  #@show sol.destats
 
-  y = zeros(ComplexF64, length(t_vec), (N+1)^2)
+  y = zeros(ComplexF64, length(tVec), (N+1)^2)
 
-  for ti=1:length(t_vec)
-    y[ti, :] = sol(t_vec[ti])
+  for ti=1:length(tVec)
+    y[ti, :] = sol(tVec[ti])
   end
 
   # Calculate expectation from spherical harmonics
@@ -168,7 +174,7 @@ function simulationMNP(Bb, t_vec;
   yexp = irot[2,1]*xexptemp + irot[2,2]*yexptemp + irot[2,3]*zexptemp;
   zexp = irot[3,1]*xexptemp + irot[3,2]*yexptemp + irot[3,3]*zexptemp;
 
-  return t_vec, cat(xexp, yexp, zexp, dims=2)
+  return tVec, cat(xexp, yexp, zexp, dims=2)
 end
 
 

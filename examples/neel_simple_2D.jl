@@ -7,6 +7,7 @@ alpha = 0.1;           # damping coefficient
 kAnis = 11000;         # anisotropy constant
 N = 20;                # maximum spherical harmonics index to be considered
 n = [1;0;0];           # anisotropy axis
+relaxation = NEEL
 reltol = 1e-4
 abstol = 1e-6
 
@@ -24,9 +25,10 @@ tMax = lcm(96,102) / samplingRate; # maximum evaluation time in seconds
 t = range(0, stop=tMax, length=tLength);
 
 # Magnetic field for simulation 
-B =  t -> (0.012*[sin(2*pi*fx*t); sin(2*pi*fy*t); 0*t]);
+B =  t -> (0.012*[sin(2*pi*fx*t) - 2.0; sin(2*pi*fy*t) - 2.0; 0*t]);
 
-@time t, y = simulationMNP(B, t; n, DCore, kAnis, N, reltol, abstol)
+@time t, y = simulationMNP(B, t; n, DCore, kAnis, N, reltol, abstol, relaxation)
+#@profview simulationMNP(B, t; n, DCore, kAnis, N, reltol, abstol, relaxation)
 
 p1 = plot(t, y[:,1])
 plot!(p1, t, y[:,2])
