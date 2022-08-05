@@ -11,10 +11,11 @@ relaxation = NEEL
 reltol = 1e-4
 abstol = 1e-6
 
+const amplitude = 0.012
 # Excitation frequencies
-fx = 2.5e6 / 102
-fy = 2.5e6 / 96
-fz = 2.5e6 / 99
+const fx = 2.5e6 / 102
+const fy = 2.5e6 / 96
+const fz = 2.5e6 / 99
 
 samplingRate = 2.5e6
 tLength = lcm(96,99,102);       # length of time vector
@@ -26,7 +27,7 @@ tMax = tLength / samplingRate;  # maximum evaluation time in seconds
 t = range(0, stop=tMax, length=tLength);
 
 # Magnetic field for simulation 
-B =  t -> (0.012*[sin(2*pi*fx*t); sin(2*pi*fy*t); sin(2*pi*fz*t)]);
+B = t -> (amplitude*[sin(2*pi*fx*t); sin(2*pi*fy*t); sin(2*pi*fz*t)]);
 
 @time t, y = simulationMNP(B, t; n, DCore, kAnis, N, reltol, abstol, relaxation)
 
