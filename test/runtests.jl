@@ -1,5 +1,4 @@
 using MNPDynamics
-using Test
+using Test, LinearAlgebra
 
-include("neel.jl")
-include("brown.jl")
+include("accuracy.jl")

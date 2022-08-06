@@ -83,7 +83,7 @@ end
 """
   simulationMNP(B, t, offsets; kargs...) 
 """
-function simulationMNP(Bb::g, tVec;
+function simulationMNP(B::g, tVec;
                        relaxation::RelaxationType = NEEL,
                        n = [0.0;0.0;1.0], 
                        MS = 474000.0, 
@@ -98,7 +98,6 @@ function simulationMNP(Bb::g, tVec;
   gamGyro = 1.75*10^11
   VCore = pi/6 * DCore^3
   VHydro =  pi/6 * DHydro^3
-  
   
 
   if relaxation == NEEL
@@ -118,6 +117,13 @@ function simulationMNP(Bb::g, tVec;
     rot = diagm([1,1,1])
     irot = diagm([1,1,1])
     m_offset, m_b3, m_bp, m_bm = generateSparseMatricesBrown(N, p2, τBrown)
+  elseif relaxation == NO_RELAXATION
+    y = zeros(Float64, length(tVec), 3)
+
+    for ti=1:length(tVec)
+      y[ti, :] = langevin(B(tVec[ti]); DCore, temp, MS)
+    end
+    return tVec, y
   else
     error("Parameter relaxation needs to be either NEEL or BROWN!")
   end
@@ -145,9 +151,9 @@ function simulationMNP(Bb::g, tVec;
   idx_bp = getIdxInM(Mzero, tmp_bp)
   idx_bm = getIdxInM(Mzero, tmp_bm)
   
-  BbRot(t) = rot*Bb(t)
+  BRot(t) = rot*B(t)
   
-  p = MNPSimulationParams(BbRot, m_offset, m_b3, m_bp, m_bm, ytmp, idx_offset, idx_b3, idx_bp, idx_bm)
+  p = MNPSimulationParams(BRot, m_offset, m_b3, m_bp, m_bm, ytmp, idx_offset, idx_b3, idx_bp, idx_bm)
 
   ff = ODEFunction(neel_odesys, jac = neel_odesys_jac, jac_prototype = Mzero)
   prob = ODEProblem(ff, y0, (tVec[1]-tWarmup, tVec[end]), p)
@@ -189,6 +195,10 @@ function simulationMNP(Bb::g, tVec;
 
   return tVec, cat(xexp, yexp, zexp, dims=2)
 end
+
+
+
+
 
 
 ##################################

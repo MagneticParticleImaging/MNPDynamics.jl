@@ -17,9 +17,10 @@ using ProgressMeter
 @enum RelaxationType begin
   NEEL
   BROWN
+  NO_RELAXATION
 end
 
-export NEEL, BROWN
+export NEEL, BROWN, NO_RELAXATION
 
 include("utils.jl")
 include("sparseMatrixSetup.jl")
