@@ -79,6 +79,10 @@ end
 
 ###############
 
+
+"""
+  simulationMNP(B, t, offsets; kargs...) 
+"""
 function simulationMNP(Bb::g, tVec;
                        relaxation::RelaxationType = NEEL,
                        n = [0.0;0.0;1.0], 
@@ -189,6 +193,9 @@ end
 
 ##################################
 
+"""
+  simulationMNPMultiOffsets(B, t, offsets; kargs...) 
+"""
 function simulationMNPMultiOffsets(B::g, t, offsets::Vector{NTuple{3,Float64}}; kargs...) where g 
 
   M = size(offsets,1)
