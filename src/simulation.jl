@@ -1,4 +1,4 @@
-export rotz, simulationMNP, simulationMNPMultiOffsets
+export rotz, simulationMNP, simulationMNPMultiParams
 
 struct MNPSimulationParams
   B::Function
@@ -204,19 +204,21 @@ end
 ##################################
 
 """
-  simulationMNPMultiOffsets(B, t, offsets; kargs...) 
+  simulationMNPMultiParams(B, t, params; kargs...) 
 """
-function simulationMNPMultiOffsets(B::g, t, offsets::Vector{NTuple{3,Float64}}; kargs...) where g 
+function simulationMNPMultiParams(B::G, t, params::Vector{P}; kargs...) where {G,P}
 
-  M = size(offsets,1)
+  M = size(params,1)
 
   magnetizations = SharedArray{Float64}(length(t), 3, M)
 
   @sync @showprogress @distributed for m=1:M
-      B_ = t -> ( B(t) .+ offsets[m] )
+    let p=params[m]
+      B_ = t -> ( B(t, p) )
       t, y = simulationMNP(B_, t; kargs...)
 
       magnetizations[:,:,m] .= y
+    end
   end
 
   return magnetizations
