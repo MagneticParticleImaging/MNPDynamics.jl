@@ -80,3 +80,27 @@ p3 = plot(t[1:end-1], dxdt, title="Derivative Magnetic Moment", legend=nothing, 
 plot(p1, p2, p3, layout=(3,1), right_margin=5mm, size=(800,400))
 savefig("neelRelaxationRect.svg")
 
+
+
+######################
+
+
+# Parameters
+p = Dict{Symbol,Any}()
+p[:DCore] = 20e-9         # particle diameter in nm
+p[:DHydro] = 80e-9        # particle diameter in nm
+p[:η] = 1e-5              # viscosity
+p[:N] = 20                # maximum spherical harmonics index to be considered
+p[:relaxation] = BROWN    # relaxation mode
+p[:reltol] = 1e-4         # relative tolerance
+p[:abstol] = 1e-6         # absolute tolerance
+p[:tWarmup] = 0.00005     # warmup time
+
+m = simulationMNP(B, t; p...)
+
+p1 = plot(t, 1000*getindex.(B.(t),1), legend=nothing, title="Magnetic Field", lw=2, c=c[1], ylabel="B / mT")
+p2 = plot(t, m[:,1], legend=nothing, title="Magnetic Moment", lw=2, c=c[2], ylabel="a.u.")
+dxdt = diff(m[:,1])./diff(t)/1e5;
+p3 = plot(t[1:end-1], dxdt, title="Derivative Magnetic Moment", legend=nothing, lw=2, c=c[3],  ylabel="a.u.", xlabel="time / s")
+plot(p1, p2, p3, layout=(3,1), right_margin=5mm, size=(800,400))
+savefig("brownRelaxation.svg")

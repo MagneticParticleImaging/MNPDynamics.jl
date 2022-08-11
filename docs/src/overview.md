@@ -93,4 +93,24 @@ The simulation result looks like this:
 
 One can nicely see the expected exponential decay after the field changes its sign.
 
+## Brown Relaxation
+
+It is also possible to simulate Brownian relaxation. This can be done with the 
+following parameter dictionary:
+
+```julia
+# Parameters
+p = Dict{Symbol,Any}()
+p[:DCore] = 20e-9         # particle diameter in nm
+p[:DHydro] = 80e-9        # particle diameter in nm
+p[:η] = 1e-5              # viscosity
+p[:N] = 20                # maximum spherical harmonics index to be considered
+p[:relaxation] = BROWN    # relaxation mode
+```
+
+![1D Brown Relaxation](./assets/brownRelaxation.svg)
+
+!!! note
+    Currently it is not possible to simulate Brownian and Neel relaxation simultaneously.
+
 ## Multiple Parameter
