@@ -93,6 +93,7 @@ function simulationMNP(B::g, tVec;
                        N = 20,
                        tWarmup = 0.00005,
                        solver = :FBDF,
+                       derivative = false,
                        reltol = 1e-3, abstol=1e-6) where g
 
   kB = 1.38064852e-23
@@ -121,9 +122,16 @@ function simulationMNP(B::g, tVec;
   elseif relaxation == NO_RELAXATION
     y = zeros(Float64, length(tVec), 3)
 
-    for ti=1:length(tVec)
-      y[ti, :] = langevin(B(tVec[ti]); DCore, temp, MS)
+    if !derivative
+      for ti=1:length(tVec)
+        y[ti, :] = langevin(B(tVec[ti]); DCore, temp, MS)
+      end
+    else
+      for ti=1:length(tVec)
+        y[ti, :] = (langevin(B(tVec[ti]+eps()); DCore, temp, MS)-langevin(B(tVec[ti]); DCore, temp, MS)) / eps()
+      end
     end
+
     return y
   else
     error("Parameter relaxation needs to be either NEEL or BROWN!")
@@ -157,7 +165,8 @@ function simulationMNP(B::g, tVec;
   p = MNPSimulationParams(BRot, m_offset, m_b3, m_bp, m_bm, ytmp, idx_offset, idx_b3, idx_bp, idx_bm)
 
   ff = ODEFunction(neel_odesys, jac = neel_odesys_jac, jac_prototype = Mzero)
-  prob = ODEProblem(ff, y0, (tVec[1]-tWarmup, tVec[end]), p)
+  dt = tVec[2] - tVec[1]
+  prob = ODEProblem(ff, y0, (tVec[1]-tWarmup, tVec[end] + dt), p)
 
   #@time 
   #sol = solve(prob, QNDF(), reltol=reltol, abstol=abstol)
@@ -184,8 +193,14 @@ function simulationMNP(B::g, tVec;
 
   y = zeros(ComplexF64, length(tVec), (N+1)^2)
 
-  for ti=1:length(tVec)
-    y[ti, :] = sol(tVec[ti])
+  if !derivative
+    for ti=1:length(tVec)
+      y[ti, :] = sol(tVec[ti])
+    end
+  else
+    for ti=1:length(tVec)
+      y[ti, :] = (sol(tVec[ti]+eps()) - sol(tVec[ti])) / eps()
+    end
   end
 
   # Calculate expectation from spherical harmonics
@@ -217,12 +232,20 @@ function simulationMNPMultiParams(B::G, t, params::Vector{P}; kargs...) where {G
   M = size(params,1)
 
   magnetizations = SharedArray{Float64}(length(t), 3, M)
+  kargsInner = copy(kargs)
 
   @sync @showprogress @distributed for m=1:M
     let p=params[m]
       B_ = t -> ( B(t, p) )
-      y = simulationMNP(B_, t; kargs...)
 
+      # this can be extended to more parameters
+      if haskey(kargs, :n) && eltype(kargs[:n]) <: Tuple
+        n = [kargs[:n][m]...]
+        kargsInner[:n] = norm(n) > 0 ? n ./ norm(n) : [1,0,0]
+        kargsInner[:kAnis] = norm(n)*kargs[:kAnis]
+      end
+
+      y = simulationMNP(B_, t; kargsInner...)
       magnetizations[:,:,m] .= y
     end
   end
