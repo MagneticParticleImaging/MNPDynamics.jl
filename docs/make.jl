@@ -5,7 +5,7 @@ makedocs(;
     #strict = :doctest,
     modules = [MNPDynamics],
     checkdocs = :exports,
-    sitename = "MNPDynamics.jl",
+    sitename = " ",
     authors = "Tobias Knopp and contributors",
     repo="https://github.com/MagneticParticleImaging/MNPDynamics.jl/blob/{commit}{path}#{line}",
     format=Documenter.HTML(;
