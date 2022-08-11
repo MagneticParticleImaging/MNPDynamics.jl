@@ -92,6 +92,7 @@ function simulationMNP(B::g, tVec;
                        η = 1e-3,
                        N = 20,
                        tWarmup = 0.00005,
+                       solver = :FBDF,
                        reltol = 1e-3, abstol=1e-6) where g
 
   kB = 1.38064852e-23
@@ -123,7 +124,7 @@ function simulationMNP(B::g, tVec;
     for ti=1:length(tVec)
       y[ti, :] = langevin(B(tVec[ti]); DCore, temp, MS)
     end
-    return tVec, y
+    return y
   else
     error("Parameter relaxation needs to be either NEEL or BROWN!")
   end
@@ -160,8 +161,13 @@ function simulationMNP(B::g, tVec;
 
   #@time 
   #sol = solve(prob, QNDF(), reltol=reltol, abstol=abstol)
-  sol = solve(prob, FBDF(), reltol=reltol, abstol=abstol)
-  #sol = solve(prob, Rodas5(autodiff=false), reltol=reltol)
+  if solver == :FBDF
+    sol = solve(prob, FBDF(), reltol=reltol, abstol=abstol)
+  elseif solver == :Rodas5
+    sol = solve(prob, Rodas5(autodiff=false), reltol=reltol)
+  else
+    error("Solver $(solver) not available")
+  end
 
   #@time sol = solve(prob, CVODE_BDF(), reltol=reltol,abstol=abstol)
   #@time sol = solve(prob, Rosenbrock23(autodiff=false), reltol=reltol)
@@ -193,7 +199,7 @@ function simulationMNP(B::g, tVec;
   yexp = irot[2,1]*xexptemp + irot[2,2]*yexptemp + irot[2,3]*zexptemp;
   zexp = irot[3,1]*xexptemp + irot[3,2]*yexptemp + irot[3,3]*zexptemp;
 
-  return tVec, cat(xexp, yexp, zexp, dims=2)
+  return cat(xexp, yexp, zexp, dims=2)
 end
 
 
@@ -215,7 +221,7 @@ function simulationMNPMultiParams(B::G, t, params::Vector{P}; kargs...) where {G
   @sync @showprogress @distributed for m=1:M
     let p=params[m]
       B_ = t -> ( B(t, p) )
-      t, y = simulationMNP(B_, t; kargs...)
+      y = simulationMNP(B_, t; kargs...)
 
       magnetizations[:,:,m] .= y
     end

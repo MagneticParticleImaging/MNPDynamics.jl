@@ -23,14 +23,14 @@ t = range(0,stop=tMax,length=tLength);
 # Magnetic field for simulation 
 B =  t -> (0.012*[sin(2*pi*fx*t); 0*t; 0*t]);
 
-t, yLangevin = simulationMNP(B, t; n, DCore, relaxation = NO_RELAXATION)
-t, yNeel = simulationMNP(B, t; n, DCore, kAnis, N, relaxation = NEEL,
+yLangevin = simulationMNP(B, t; n, DCore, relaxation = NO_RELAXATION)
+yNeel = simulationMNP(B, t; n, DCore, kAnis, N, relaxation = NEEL,
                                   reltol, abstol)
 
 e = norm(yLangevin[:] - yNeel[:]) / norm(yLangevin[:])
 @test e < eps 
 
-t, yBrown = simulationMNP(B, t; n, DCore, DHydro, η, relaxation = BROWN,
+yBrown = simulationMNP(B, t; n, DCore, DHydro, η, relaxation = BROWN,
                            reltol, abstol)
 
 e = norm(yLangevin[:] - yNeel[:]) / norm(yLangevin[:])

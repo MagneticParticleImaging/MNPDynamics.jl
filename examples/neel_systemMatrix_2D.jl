@@ -2,14 +2,16 @@ using MNPDynamics
 using Plots
 
 # Parameters
-DCore = 20e-9;         # particle diameter in nm
-alpha = 0.1;           # damping coefficient
-kAnis = 11000;         # anisotropy constant
-N = 20;                # maximum spherical harmonics index to be considered
-n = [1;0;0];           # anisotropy axis
-relaxation = NEEL
-reltol = 1e-3
-abstol = 1e-6
+p = Dict{Symbol,Any}()
+p[:DCore] = 20e-9         # particle diameter in nm
+p[:α] = 0.1               # damping coefficient
+p[:kAnis] = 11000         # anisotropy constant
+p[:N] = 20                # maximum spherical harmonics index to be considered
+p[:n] = [1;0;0]           # anisotropy axis
+p[:relaxation] = NEEL     # relaxation mode
+p[:reltol] = 1e-6         # relative tolerance
+p[:abstol] = 1e-6         # absolute tolerance
+p[:tWarmup] = 0.00005     # warmup time
 
 # Excitation frequencies
 const fx = 2.5e6 / 102
@@ -29,4 +31,4 @@ nOffsets = (5, 5, 1)
 
 offsets = vec([ amplitude.*4.0.*((Tuple(x).-0.5)./nOffsets.-0.5)  for x in CartesianIndices(nOffsets) ])
 
-@time smM = simulationMNPMultiParams(B, t, offsets; DCore, kAnis, N, reltol, abstol, relaxation)
+@time smM = simulationMNPMultiParams(B, t, offsets; p...)

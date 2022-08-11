@@ -2,26 +2,29 @@ using MNPDynamics
 using Plots
 
 # Parameters
-DCore = 20e-9;         # particle diameter in nm
-alpha = 0.1;           # damping coefficient
-kAnis = 11000;         # anisotropy constant
-N = 20;                # maximum spherical harmonics index to be considered
-n = [1;0;0];           # anisotropy axis
-relaxation = NEEL
-reltol = 1e-4
-abstol = 1e-6
+p = Dict{Symbol,Any}()
+p[:DCore] = 20e-9         # particle diameter in nm
+p[:α] = 0.1               # damping coefficient
+p[:kAnis] = 1100          # anisotropy constant
+p[:N] = 20                # maximum spherical harmonics index to be considered
+p[:n] = [1;0;0]           # anisotropy axis
+p[:relaxation] = NEEL     # relaxation mode
+p[:reltol] = 1e-6         # relative tolerance
+p[:abstol] = 1e-6         # absolute tolerance
+p[:tWarmup] = 0.00005     # warmup time
+
 
 const amplitude = 0.012
 const fx = 25000;
 tLength = 1000;       # length of time vector
-tMax = 4/fx;          # maximum evaluation time in seconds
+tMax = 1/fx;          # maximum evaluation time in seconds
 
 t = range(0,stop=tMax,length=tLength);
 
 # Magnetic field for simulation 
 B =  t -> (amplitude*[sin(2*pi*fx*t); 0*t; 0*t]);
 
-@time t, y = simulationMNP(B, t; n, DCore, kAnis, N, reltol, abstol, relaxation)
+@time y = simulationMNP(B, t; p...)
 
 p1 = plot(t, y[:,1])
 plot!(p1, t, y[:,2])

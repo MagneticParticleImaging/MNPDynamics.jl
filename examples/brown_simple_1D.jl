@@ -2,14 +2,17 @@ using MNPDynamics
 using Plots
 
 # Parameters
-DCore = 20e-9;         # particle diameter in nm
-DHydro = 20e-9;         # particle diameter in nm
-η = 1e-5;
-relaxation = BROWN
-reltol = 1e-4
-abstol = 1e-6
+p = Dict{Symbol,Any}()
+p[:DCore] = 20e-9         # particle diameter in nm
+p[:DHydro] = 20e-9        # particle diameter in nm
+p[:η] = 1e-5              # viscosity
+p[:N] = 20                # maximum spherical harmonics index to be considered
+p[:relaxation] = BROWN    # relaxation mode
+p[:reltol] = 1e-4         # relative tolerance
+p[:abstol] = 1e-6         # absolute tolerance
+p[:tWarmup] = 0.00005     # warmup time
 
-fx = 25000;
+const fx = 25000;
 tLength = 1000;       # length of time vector
 tMax = 4/fx;          # maximum evaluation time in seconds
 
@@ -18,7 +21,7 @@ t = range(0,stop=tMax,length=tLength);
 # Magnetic field for simulation 
 B =  t -> (0.012*[sin(2*pi*fx*t); 0*t; 0*t]);
 
-@time t, y = simulationMNP(B, t; n, DCore, DHydro, η, reltol, abstol, relaxation)
+@time y = simulationMNP(B, t; p...)
 
 p1 = plot(t, y[:,1])
 plot!(p1, t, y[:,2])
