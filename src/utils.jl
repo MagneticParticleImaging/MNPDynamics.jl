@@ -20,6 +20,14 @@ function rotz(x)
   return R
 end
 
+# New finite difference formulas for numerical differentiation
+# https://doi.org/10.1016/S0377-0427(99)00358-1
+function e(n,k)
+  k = BigInt(k)
+  n = BigInt(n)
+  return Float64(((-1)^Int(k+1)*prod(2*n-1:-2:1)^2)//(2^(2*n-2)*factorial(n+k-1)*factorial(n-k)*(2*k-1)^2))
+end
+
 
 function langevin(H::Vector; DCore=25e-9, temp=294, MS=0.6/(4*π*1e-7))
   kB = 1.380650424e-23 #Boltzman constant
