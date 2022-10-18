@@ -21,7 +21,7 @@ tMax = 4/fx;          # maximum evaluation time in seconds
 t = range(0,stop=tMax,length=tLength);
 
 # Magnetic field for simulation 
-B =  t -> (0.012*[sin(2*pi*fx*t); 0*t; 0*t]);
+B =  t -> SVector{3,Float64}(0.012*[sin(2*pi*fx*t); 0*t; 0*t]);
 
 yLangevin = simulationMNP(B, t; n, DCore, relaxation = NO_RELAXATION)
 yNeel = simulationMNP(B, t; n, DCore, kAnis, N, relaxation = NEEL,

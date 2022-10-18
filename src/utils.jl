@@ -29,16 +29,16 @@ function e(n,k)
 end
 
 
-function langevin(H::Vector; DCore=25e-9, temp=294, MS=0.6/(4*π*1e-7))
+function langevin(H::V; DCore=25e-9, temp=294, MS=0.6/(4*π*1e-7)) where {T,V<:AbstractVector{T}}
   kB = 1.380650424e-23 #Boltzman constant
   μ₀ = 4*π*1e-7 #vacuum permeability
   msat = MS * π/6*DCore^3 #saturation magnetic moment of a single nanoparticle
-  beta = msat /(kB*temp) #H measured in T/μ₀
+  beta::T = msat /(kB*temp) #H measured in T/μ₀
 
   if norm(H)!=0
     x = beta*norm(H)
     return  (coth(x) - 1/x)*normalize(H) # msat*
   else
-    return zeros(3)
+    return zeros(T,3)
   end  
 end

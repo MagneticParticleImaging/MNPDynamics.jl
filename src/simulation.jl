@@ -106,13 +106,32 @@ function simulationMNP(B::g, tVec;
                        derivative = false,
                        derivative_order=50 # order of finite differentiation method
                        ) where g
-  prob, rot = set_up_simulation(B, tVec; 
-                           relaxation=relaxation, n=n, MS=MS, DCore=DCore, 
-                           DHydro=DHydro, temp=temp, α=α, kAnis=kAnis, η=η, 
-                           N=N, tWarmup=tWarmup, derivative_order=derivative_order)
-  sol = simulate(prob, solver, reltol, abstol)
-  sol_sampled = sample_solution(sol, tVec, rot, N, derivative, derivative_order)
-  return sol_sampled
+    
+  if relaxation == NO_RELAXATION
+    y = zeros(Float64, length(tVec), 3)
+                    
+    if !derivative
+      for ti=1:length(tVec)
+        y[ti, :] = langevin(B(tVec[ti]); DCore, temp, MS)
+      end
+    else
+      for ti=1:length(tVec)
+        y[ti, :] = (langevin(B(tVec[ti]+eps()); DCore, temp, MS)-langevin(B(tVec[ti]); DCore, temp, MS)) / eps()
+      end
+    end
+                    
+    return y
+  elseif relaxation == NEEL || relaxation == BROWN
+    prob, rot = set_up_simulation(B, tVec; 
+                            relaxation=relaxation, n=n, MS=MS, DCore=DCore, 
+                            DHydro=DHydro, temp=temp, α=α, kAnis=kAnis, η=η, 
+                            N=N, tWarmup=tWarmup, derivative_order=derivative_order)
+    sol = simulate(prob, solver, reltol, abstol)
+    sol_sampled = sample_solution(sol, tVec, rot, N, derivative, derivative_order)
+    return sol_sampled
+  else
+    error("Relaxation type unknown!")
+  end
 end
 
 function set_up_simulation(B::g, tVec;
@@ -144,28 +163,12 @@ function set_up_simulation(B::g, tVec;
 
     rot = rotz(n)   # Rotation matrix that rotates n to the z axis
     m_offset, m_b3, m_bp, m_bm = generateSparseMatricesNeel(N, p1, p2, p3, p4, τNeel)
-  elseif relaxation == BROWN
+  else relaxation == BROWN
     τBrown = 3*η*VHydro/(kB*temp)
     p2 = MS*VCore/(6*η*VHydro);
 
     rot = diagm([1,1,1])
     m_offset, m_b3, m_bp, m_bm = generateSparseMatricesBrown(N, p2, τBrown)
-  elseif relaxation == NO_RELAXATION
-    y = zeros(Float64, length(tVec), 3)
-
-    if !derivative
-      for ti=1:length(tVec)
-        y[ti, :] = langevin(B(tVec[ti]); DCore, temp, MS)
-      end
-    else
-      for ti=1:length(tVec)
-        y[ti, :] = (langevin(B(tVec[ti]+eps()); DCore, temp, MS)-langevin(B(tVec[ti]); DCore, temp, MS)) / eps()
-      end
-    end
-
-    return y
-  else
-    error("Parameter relaxation needs to be either NEEL or BROWN!")
   end
 
   # initial value
