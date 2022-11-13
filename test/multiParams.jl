@@ -4,9 +4,9 @@
 # Parameters
 DCore = 20e-9;         # particle diameter in nm
 alpha = 0.1;           # damping coefficient
-kAnis = 11000;         # anisotropy constant
+kAnis = 1100*[1;0;0]   # anisotropy constant and anisotropy axis
 N = 20;                # maximum spherical harmonics index to be considered
-n = [1;0;0];           # anisotropy axis
+n = ;           # anisotropy axis
 relaxation = NEEL
 reltol = 1e-3
 abstol = 1e-6
@@ -23,7 +23,7 @@ t = range(0, stop=tMax, length=tLength);
 
 # Magnetic field for simulation
 amplitude = 0.012
-B = (t, offset) -> SVector{3,Float64}(amplitude*cospi(2*fx*t)+offset[1], amplitude*cospi(2*fy*t)+offset[2], offset[3])
+B = (t, offset) -> (amplitude*cospi(2*fx*t)+offset[1], amplitude*cospi(2*fy*t)+offset[2], offset[3])
 
 nOffsets = (5, 1, 1)
 

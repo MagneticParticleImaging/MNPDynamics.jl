@@ -1,4 +1,5 @@
-export plot2DSM
+using Plots
+
 function plot2DSM(smFT, MX, MY; filename=nothing)
   pl = Any[]
   for my=1:MY

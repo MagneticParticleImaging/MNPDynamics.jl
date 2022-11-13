@@ -14,18 +14,18 @@ using SharedArrays
 
 using ProgressMeter
 
-using HDF5, BSON
-using Flux, NeuralOperators, MLUtils
-using Flux: withgradient
-using StatsBase #, Statistics
-using Random
-using ImageFiltering
-using Interpolations
-using Plots
-using FFTW
 
-#import Pardiso
-#using Sundials
+## sorting algorithms ##
+
+abstract type MNPAlgorithm end
+
+struct FokkerPlanckAlg <: MNPAlgorithm end
+struct LangevinFunctionAlg <: MNPAlgorithm end
+
+const FokkerPlanck = FokkerPlanckAlg()
+const LangevinFunction = LangevinFunctionAlg()
+
+export FokkerPlanck, LangevinFunction
 
 @enum RelaxationType begin
   NEEL
@@ -46,8 +46,10 @@ export NEEL, RANDOM_FIELD, HARMONIC_RANDOM_FIELD, HARMONIC_MPI_FIELD
 include("utils.jl")
 include("sparseMatrixSetup.jl")
 include("simulation.jl")
-include("neuralOperator.jl")
-include("visualization.jl")
+include("multiParams.jl")
+include("magneticFields.jl")
+
+export simulationMNP, simulationMNPMultiParams
 
 
 end # module

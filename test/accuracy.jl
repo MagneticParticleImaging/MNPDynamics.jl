@@ -18,11 +18,11 @@ fx = fb / 102
 
 samplingMultiplier = 2                          # sampling rate = samplingMultiplier*fb
 tLength = samplingMultiplier*102                # length of time vector
-tMax = (102-1/samplingMultiplier) / fb  # maximum evaluation time in seconds
+tMax = (102-1/samplingMultiplier) / fb          # maximum evaluation time in seconds
 t = range(0,stop=tMax,length=tLength);
 
 # Magnetic field for simulation 
-B =  t -> SVector{3,Float64}(0.012*[sin(2*pi*fx*t), 0*t, 0*t]);
+B =  t -> (0.012*[sin(2*pi*fx*t), 0*t, 0*t]);
 
 yLangevin = simulationMNP(B, t; DCore, relaxation = NO_RELAXATION)
 yNeel = simulationMNP(B, t; DCore, kAnis, N, relaxation = NEEL,
