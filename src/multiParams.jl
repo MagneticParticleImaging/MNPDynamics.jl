@@ -7,16 +7,19 @@ function simulationMNPMultiParams(B::G, t, params::Vector{P}; kargs...) where {G
   M = length(params)
 
   magneticMoments = SharedArray{Float64}(length(t), 3, M)
-  kargsInner = copy(kargs)
 
+  prog = Progress(M, 1, "Simulation")
   #try
     BLAS.set_num_threads(1)
-    @sync @showprogress @distributed for m=1:M
-      let p=params[m]
+    #@sync @showprogress @distributed 
+    #@showprogress 
+    Threads.@threads for m=1:M
+      let p=params[m], kargsInner=copy(kargs)
         B_ = t -> ( B(t, p) )
 
         # this can be extended to more parameters
-        if haskey(kargs, :kAnis) && typeof(kargs[:kAnis]) <: AbstractVector  && eltype(kargs[:kAnis]) <: AbstractVector
+        if haskey(kargs, :kAnis) && typeof(kargs[:kAnis]) <: AbstractVector &&
+                ( eltype(kargs[:kAnis]) <: AbstractVector || eltype(kargs[:kAnis]) <: Tuple )
           kargsInner[:kAnis] = kargs[:kAnis][m]
         end
 
@@ -28,6 +31,7 @@ function simulationMNPMultiParams(B::G, t, params::Vector{P}; kargs...) where {G
         magneticMoments[:,:,m] .= y
         GC.gc()
       end
+      next!(prog)
     end
   #finally
     BLAS.set_num_threads(numThreadsBLAS)

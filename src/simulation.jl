@@ -147,9 +147,9 @@ function set_up_simulation(B::g, tVec;
   VCore = pi/6 * DCore^3
   VHydro =  pi/6 * DHydro^3
 
-  if typeof(kAnis) <: AbstractVector
-    kAnis_ = norm(kAnis)
-    n = norm(kAnis) > 0 ? normalize(kAnis) : [1.0, 0.0, 0.0]
+  if typeof(kAnis) <: AbstractVector || typeof(kAnis) <: Tuple
+    kAnis_ = norm(collect(kAnis))
+    n = norm(collect(kAnis)) > 0 ? normalize(collect(kAnis)) : [1.0, 0.0, 0.0]
   else
     kAnis_ = kAnis
     n = [0.0;0.0;1.0]
@@ -216,9 +216,9 @@ end
 
 function simulate(prob, solver, reltol, abstol, tstops)
   if solver == :FBDF
-    sol = solve(prob, FBDF(), reltol=reltol, abstol=abstol)#, tstops=tstops)#, tstops=tVec)
+    sol = solve(prob, FBDF(), reltol=reltol, abstol=abstol, tstops=tstops)
   elseif solver == :Rodas5
-    sol = solve(prob, Rodas5(autodiff=false), reltol=reltol, abstol=abstol)#, tstops=tstops)
+    sol = solve(prob, Rodas5(autodiff=false), reltol=reltol, abstol=abstol, tstops=tstops)
   else
     error("Solver $(solver) not available")
   end

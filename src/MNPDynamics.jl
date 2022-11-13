@@ -7,6 +7,7 @@ using SparseDiffTools
 using LinearSolve
 
 using ImageFiltering
+using Interpolations
 using OffsetArrays
 
 using Distributed

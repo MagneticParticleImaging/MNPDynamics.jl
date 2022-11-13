@@ -1,6 +1,8 @@
 using MNPDynamics
 using Plots, StaticArrays, FFTW
 
+include("visualization.jl")
+
 # Excitation frequencies
 fb = 2.5e6
 fx = fb / 102
@@ -15,7 +17,7 @@ t = range(0, stop=tMax, length=tLength);
 p = Dict{Symbol,Any}()
 p[:DCore] = 20e-9         # particle diameter in nm
 p[:α] = 0.1               # damping coefficient
-p[:kAnis] = 625           # anisotropy constant
+p[:kAnis] = 1250          # anisotropy constant
 p[:N] = 10                # maximum spherical harmonics index to be considered
 p[:relaxation] = NEEL     # relaxation mode
 p[:reltol] = 1e-5         # relative tolerance
@@ -27,13 +29,11 @@ p[:derivative] = true
 const amplitude = 0.012
 B = (t, offset) -> SVector{3,Float64}(amplitude*cospi(2*fx*t)+offset[1], amplitude*cospi(2*fy*t)+offset[2], offset[3])
 
-nOffsets = (20, 20, 1)
+nOffsets = (30, 30, 1)
 
 oversampling = 1.25
 offsets = vec([ oversampling*amplitude.*2.0.*((Tuple(x).-0.5)./nOffsets.-0.5)  for x in CartesianIndices(nOffsets) ])
-anisotropyAxis = vec([ oversampling*2.0.*((Tuple(x).-0.5)./nOffsets.-0.5)  for x in CartesianIndices(nOffsets) ])
-
-p[:kAnis] = p[:kAnis]*anisotropyAxis
+p[:kAnis] = vec([ p[:kAnis]*oversampling*2.0.*((Tuple(x).-0.5)./nOffsets.-0.5)  for x in CartesianIndices(nOffsets) ])
 
 @time smM = simulationMNPMultiParams(B, t, offsets; p...)
 
