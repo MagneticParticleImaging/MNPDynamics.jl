@@ -1,5 +1,5 @@
 using MNPDynamics
-using Plots, Measures, ImageFiltering
+using Plots, Measures
 
 
 c = [RGB(0.0,0.29,0.57), RGB(0.3,0.5,0.7), RGB(0.94,0.53,0.12), RGB(0.99,0.75,0.05)]
@@ -36,9 +36,8 @@ savefig("simpleNoRelaxation.svg")
 p = Dict{Symbol,Any}()
 p[:DCore] = 20e-9         # particle diameter in nm
 p[:α] = 0.1               # damping coefficient
-p[:kAnis] = 11000          # anisotropy constant
+p[:kAnis] = 11000*[1;0;0] # anisotropy constant and axis
 p[:N] = 20                # maximum spherical harmonics index to be considered
-p[:n] = [1;0;0]           # anisotropy axis
 p[:relaxation] = NEEL     # relaxation mode
 p[:reltol] = 1e-6         # relative tolerance
 p[:abstol] = 1e-6         # absolute tolerance
@@ -61,14 +60,12 @@ savefig("neelRelaxation.svg")
 p = Dict{Symbol,Any}()
 p[:DCore] = 20e-9         # particle diameter in nm
 p[:α] = 0.1               # damping coefficient
-p[:kAnis] = 11000          # anisotropy constant
+p[:kAnis] = 11000*[1;0;0] # anisotropy constant and axis
 p[:N] = 20                # maximum spherical harmonics index to be considered
-p[:n] = [1;0;0]           # anisotropy axis
 p[:relaxation] = NEEL     # relaxation mode
 p[:reltol] = 1e-6         # relative tolerance
 p[:abstol] = 1e-6         # absolute tolerance
 p[:tWarmup] = 0.00001     # warmup time
-p[:solver] = :Rodas5      # Use more stable solver
 
 # Magnetic field for simulation 
 Brect(t) = amplitude*[ 0.25 < fx*mod(t,1) < 0.75  ? -1.0 : 1.0 , 0, 0]
