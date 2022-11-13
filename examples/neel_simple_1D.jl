@@ -1,5 +1,14 @@
 using MNPDynamics
-using Plots
+using Plots, StaticArrays
+
+# Excitation frequencies
+fb = 2.5e6
+fx = fb / 102
+
+samplingMultiplier = 2                  # sampling rate = samplingMultiplier*fb
+tLength = samplingMultiplier*102        # length of time vector
+tMax = (102-1/samplingMultiplier) / fb  # maximum evaluation time in seconds
+t = range(0,stop=tMax,length=tLength);
 
 # Parameters
 p = Dict{Symbol,Any}()
@@ -10,18 +19,11 @@ p[:N] = 20                # maximum spherical harmonics index to be considered
 p[:relaxation] = NEEL     # relaxation mode
 p[:reltol] = 1e-6         # relative tolerance
 p[:abstol] = 1e-6         # absolute tolerance
-p[:tWarmup] = 0.00005     # warmup time
-
-
-amplitude = 0.012
-fx = 25000;
-tLength = 1000;       # length of time vector
-tMax = 1/fx;          # maximum evaluation time in seconds
-
-t = range(0,stop=tMax,length=tLength);
+p[:tWarmup] = 1 / fb      # warmup time
 
 # Magnetic field for simulation 
-B =  t -> (amplitude*[sin(2*pi*fx*t); 0*t; 0*t]);
+const amplitude = 0.012
+B =  t -> SVector{3,Float64}(amplitude*[cospi(2*fx*t), 0, 0])
 
 @time y = simulationMNP(B, t; p...)
 

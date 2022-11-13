@@ -1,27 +1,30 @@
 using MNPDynamics
-using Plots, Measures
+using Plots, StaticArrays
 
+# Excitation frequencies
+fb = 2.5e6
+fx = fb / 102
 
+samplingMultiplier = 2                  # sampling rate = samplingMultiplier*fb
+tLength = samplingMultiplier*102        # length of time vector
+tMax = (102-1/samplingMultiplier) / fb  # maximum evaluation time in seconds
+t = range(0,stop=tMaxs,length=tLength);
+
+# Parameters
 p = Dict{Symbol,Any}()
 p[:DCore] = 20e-9         # particle diameter in nm
 p[:α] = 0.1               # damping coefficient
 p[:kAnis] = 11000*[1;0;0] # anisotropy constant and axis
-p[:N] = 20                # maximum spherical harmonics index to be considered
+p[:N] = 10                # maximum spherical harmonics index to be considered
 p[:relaxation] = NEEL     # relaxation mode
-p[:reltol] = 1e-6         # relative tolerance
-p[:abstol] = 1e-6         # absolute tolerance
-p[:tWarmup] = 0.00001     # warmup time
-p[:solver] =  :FBDF  #:Rodas5      # Use more stable solver
+p[:reltol] = 1e-5         # relative tolerance
+p[:abstol] = 1e-5         # absolute tolerance
+p[:tWarmup] = 1 / fb      # warmup time
+p[:solver] = :Rodas5      # Use more stable solver
 
-amplitude = 0.012
-fx = 25000;
-tLength = 1000;        # length of time vector
-tMax = 1/fx;          # maximum evaluation time in seconds
-
-t = range(0, stop=tMax, length=tLength);
-
-# Magnetic field for simulation 
-Brect(t) = amplitude*[ 0.25 < fx*mod(t,1) < 0.75  ? -1.0 : 1.0 , 0, 0]
+# Magnetic field for simulation
+const amplitude = 0.012
+Brect =  t -> SVector{3,Float64}(amplitude*[ 0.25 < fx*mod(t,1) < 0.75  ? -1.0 : 1.0 , 0, 0])
 
 @time m = simulationMNP(Brect, t; p...)
 

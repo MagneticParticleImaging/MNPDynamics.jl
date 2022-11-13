@@ -6,6 +6,9 @@ using OrdinaryDiffEq
 using SparseDiffTools
 using LinearSolve
 
+using ImageFiltering
+using OffsetArrays
+
 using Distributed
 using SharedArrays
 

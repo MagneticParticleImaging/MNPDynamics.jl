@@ -2,11 +2,10 @@ export rotz, simulationMNP, simulationMNPMultiParams
 
 struct MNPSimulationParams
   B::Function
-  m_offset::SparseMatrixCSC{Complex{Float64},Int64}
-  m_b3::SparseMatrixCSC{Complex{Float64},Int64}
-  m_bp::SparseMatrixCSC{Complex{Float64},Int64}
-  m_bm::SparseMatrixCSC{Complex{Float64},Int64}
-  ytmp::Vector{ComplexF64}
+  m_offset::SparseMatrixCSC{ComplexF64,Int64}
+  m_b3::SparseMatrixCSC{ComplexF64,Int64}
+  m_bp::SparseMatrixCSC{ComplexF64,Int64}
+  m_bm::SparseMatrixCSC{ComplexF64,Int64}
   idx_offset::Vector{Int64}
   idx_b3::Vector{Int64}
   idx_bp::Vector{Int64}
@@ -25,19 +24,13 @@ function neel_odesys(y_out, y, p, t)
 end
 
 function neel_odesys_inner(y_out, y, p, B_1, B_2, B_3)
-  y_out .= 0.0
-  mul!(p.ytmp, p.m_bm, y)
-  y_out .+= (B_1 - 1im*B_2) .* p.ytmp
-  mul!(p.ytmp, p.m_bp, y) 
-  y_out .+= (B_1 + 1im*B_2) .* p.ytmp
-  mul!(p.ytmp, p.m_b3, y)
-  y_out .+= B_3 .* p.ytmp
-  mul!(p.ytmp, p.m_offset, y)
-  y_out .+= p.ytmp
-
   # M = p.m_offset + B_3 .* p.m_b3 + (B_1 + 1im*B_2) .* p.m_bp + (B_1 - 1im*B_2) .* p.m_bm;
   # y_out .= M*y
-
+  mul!(y_out, p.m_bm, y, B_1 - im*B_2, 0)
+  mul!(y_out, p.m_bp, y, (B_1 + im*B_2), 1) 
+  mul!(y_out, p.m_b3, y, B_3, 1)
+  mul!(y_out, p.m_offset, y, 1.0, 1)
+  
   return 
 end
 
@@ -61,11 +54,23 @@ function neel_odesys_jac_inner(y_out, y, p, B_1, B_2, B_3)
   # y_out .= M
   
   y_out.nzval .= 0
-  y_out.nzval[p.idx_bm] .+= (B_1 - 1im*B_2) .* p.m_bm.nzval
-  y_out.nzval[p.idx_bp] .+= (B_1 + 1im*B_2) .* p.m_bp.nzval
-  y_out.nzval[p.idx_b3] .+= B_3 .* p.m_b3.nzval
-  y_out.nzval[p.idx_offset] .+= p.m_offset.nzval
-  
+  # y_out.nzval[p.idx_bm] .+= (B_1 - im*B_2) .* p.m_bm.nzval
+  @inbounds for (i,j) in enumerate(p.idx_bm)
+    y_out.nzval[j] += (B_1 - im*B_2) * p.m_bm.nzval[i]
+  end
+  # y_out.nzval[p.idx_bp] .+= (B_1 + im*B_2) .* p.m_bp.nzval
+  @inbounds for (i,j) in enumerate(p.idx_bp)
+    y_out.nzval[j] += (B_1 + im*B_2) * p.m_bp.nzval[i]
+  end
+  # y_out.nzval[p.idx_b3] .+= B_3 .* p.m_b3.nzval
+  @inbounds for (i,j) in enumerate(p.idx_b3)
+    y_out.nzval[j] += B_3 * p.m_b3.nzval[i]
+  end
+  # y_out.nzval[p.idx_offset] .+= p.m_offset.nzval
+  @inbounds for (i,j) in enumerate(p.idx_offset)
+    y_out.nzval[j] += p.m_offset.nzval[i]
+  end
+
   return 
 end
 
@@ -97,14 +102,66 @@ end
 function simulationMNPFokkerPlank(B::g, tVec;
                        relaxation::RelaxationType = NEEL, 
                        MS = 474000.0, 
-                       DCore = 20e-9, DHydro = DCore,
-                       temp = 293.0, α = 0.1, kAnis = 625,
+                       DCore = 20e-9, 
+                       DHydro = DCore,
+                       temp = 293.0,
+                       α = 0.1, 
+                       kAnis = 625,
                        η = 1e-3,
                        N = 20,
                        tWarmup = 0.00005,
                        solver = :FBDF,
+                       reltol = 1e-3, 
+                       abstol=1e-6,
                        derivative = false,
-                       reltol = 1e-3, abstol=1e-6) where g
+                       derivative_order=50 # order of finite differentiation method
+                       ) where g
+    
+  if relaxation == NO_RELAXATION
+    y = zeros(Float64, length(tVec), 3)
+                    
+    if !derivative
+      for ti=1:length(tVec)
+        y[ti, :] = langevin(B(tVec[ti]); DCore, temp, MS)
+      end
+    else
+      for ti=1:length(tVec)
+        y[ti, :] = (langevin(B(tVec[ti]+eps()); DCore, temp, MS)-langevin(B(tVec[ti]); DCore, temp, MS)) / eps()
+      end
+    end
+                    
+    return y
+  elseif relaxation == NEEL || relaxation == BROWN
+    prob, rot, tstops = set_up_simulation(B, tVec; 
+                            relaxation=relaxation, MS=MS, DCore=DCore, 
+                            DHydro=DHydro, temp=temp, α=α, kAnis=kAnis, η=η, 
+                            N=N, tWarmup=tWarmup, derivative_order=derivative_order)
+    sol = simulate(prob, solver, reltol, abstol, tstops)
+    sol_sampled = sample_solution(sol, tVec, rot, N, derivative, derivative_order)
+    return sol_sampled
+  else
+    error("Relaxation type unknown!")
+  end
+end
+
+function set_up_simulation(B::g, tVec;
+                    relaxation::RelaxationType = NEEL,
+                    MS = 474000.0, 
+                    DCore = 20e-9, 
+                    DHydro = DCore,
+                    temp = 293.0, 
+                    α = 0.1, 
+                    kAnis = 625,
+                    η = 1e-3,
+                    N = 20,
+                    tWarmup = 0.00005,
+                    derivative_order = 50 # order of finite differentiation method
+                    ) where g                  
+
+  kB = 1.38064852e-23
+  gamGyro = 1.75*10^11
+  VCore = pi/6 * DCore^3
+  VHydro =  pi/6 * DHydro^3
 
   if typeof(kAnis) <: AbstractVector
     kAnis_ = norm(kAnis)
@@ -113,12 +170,6 @@ function simulationMNPFokkerPlank(B::g, tVec;
     kAnis_ = kAnis
     n = [0.0;0.0;1.0]
   end
-
-  kB = 1.38064852e-23
-  gamGyro = 1.75*10^11
-  VCore = pi/6 * DCore^3
-  VHydro =  pi/6 * DHydro^3
-  
 
   if relaxation == NEEL
     τNeel = MS*VCore/(kB*temp*gamGyro)*(1+α^2)/(2*α)
@@ -132,37 +183,18 @@ function simulationMNPFokkerPlank(B::g, tVec;
     end
 
     rot = rotz(n)   # Rotation matrix that rotates n to the z axis
-    irot = inv(rot) # Rotation matrix that rotates the z axis to n
     m_offset, m_b3, m_bp, m_bm = generateSparseMatricesNeel(N, p1, p2, p3, p4, τNeel)
-  elseif relaxation == BROWN
+  else relaxation == BROWN
     τBrown = 3*η*VHydro/(kB*temp)
     p2 = MS*VCore/(6*η*VHydro);
 
     rot = diagm([1,1,1])
-    irot = diagm([1,1,1])
     m_offset, m_b3, m_bp, m_bm = generateSparseMatricesBrown(N, p2, τBrown)
-  elseif relaxation == NO_RELAXATION
-    y = zeros(Float64, length(tVec), 3)
-
-    if !derivative
-      for ti=1:length(tVec)
-        y[ti, :] = langevin(B(tVec[ti]); DCore, temp, MS)
-      end
-    else
-      for ti=1:length(tVec)
-        y[ti, :] = (langevin(B(tVec[ti]+eps()); DCore, temp, MS)-langevin(B(tVec[ti]); DCore, temp, MS)) / eps()
-      end
-    end
-
-    return y
-  else
-    error("Parameter relaxation needs to be either NEEL or BROWN!")
   end
 
   # initial value
   y0 = zeros(ComplexF64, (N+1)^2);
   y0[1] = 1/(4*pi);
-  ytmp = zeros(ComplexF64, (N+1)^2);
 
   # calculate the indices occuring in the jacobian  
   tmp_off = deepcopy(m_offset)
@@ -182,58 +214,68 @@ function simulationMNPFokkerPlank(B::g, tVec;
   idx_bp = getIdxInM(Mzero, tmp_bp)
   idx_bm = getIdxInM(Mzero, tmp_bm)
   
-  BRot(t) = rot*B(t)
-  
-  p = MNPSimulationParams(BRot, m_offset, m_b3, m_bp, m_bm, ytmp, idx_offset, idx_b3, idx_bp, idx_bm)
-
-  ff = ODEFunction(neel_odesys, jac = neel_odesys_jac, jac_prototype = Mzero)
-  dt = tVec[2] - tVec[1]
-  prob = ODEProblem(ff, y0, (tVec[1]-tWarmup, tVec[end] + dt), p)
+  BRot = (t) -> rot*B(t)
 
   # The following tries to find out discontinuities which helps the solver
   B_ = [B(t)[d] for d=1:3, t in tVec]
   BD_ = vec(sum(abs.(diff(B_, dims=2)),dims=1) ./ maximum(abs.(B_)))
   tstops = ((tVec[1:end-1])[BD_ .> 0.2]) # 0.2 is a magic number
+  
+  p = MNPSimulationParams(BRot, m_offset, m_b3, m_bp, m_bm, idx_offset, idx_b3, idx_bp, idx_bm)
 
-  #@time 
-  #sol = solve(prob, QNDF(), reltol=reltol, abstol=abstol)
+  ff = ODEFunction(neel_odesys, jac = neel_odesys_jac, jac_prototype = Mzero)
+  dt = tVec[2] - tVec[1]
+  prob = ODEProblem(ff, y0, (tVec[1] - derivative_order*dt - tWarmup, tVec[end] + derivative_order*dt), p)
+  return prob, rot, tstops
+end
+
+
+function simulate(prob, solver, reltol, abstol, tstops)
   if solver == :FBDF
     sol = solve(prob, FBDF(), reltol=reltol, abstol=abstol, tstops=tstops)#, tstops=tVec)
-
-    #choice_function(integrator) = (Int(integrator.dt<dt/10) + 1)
-    #alg_switch = CompositeAlgorithm((FBDF(), Rodas5(autodiff=false)), choice_function)
-    ##alg_switch = AutoSwitch(FBDF(), Rodas5(autodiff=false))
-    ##alg_switch = AutoTsit5(Rosenbrock23(autodiff=false))
-    #sol = solve(prob, alg_switch, reltol=reltol, abstol=abstol)
-
   elseif solver == :Rodas5
     sol = solve(prob, Rodas5(autodiff=false), reltol=reltol, abstol=abstol, tstops=tstops)
   else
     error("Solver $(solver) not available")
   end
-
-  #@time sol = solve(prob, CVODE_BDF(), reltol=reltol,abstol=abstol)
-  #@time sol = solve(prob, Rosenbrock23(autodiff=false), reltol=reltol)
- # @time sol = solve(prob, Rodas5(autodiff=false, linsolve=KLUFactorization(reuse_symbolic=false)), dt=1e-3, reltol=reltol)
- # @time sol = solve(prob, Rodas5(autodiff=false), dt=1e-3, reltol=reltol)
-  #@time sol = solve(prob, TRBDF2(autodiff=false), dt=1e-3, reltol=reltol)
-  #@time 
+  return sol
+end
 
 
-  #@time sol = solve(prob, Rodas5(autodiff=false, linsolve=KLUFactorization(reuse_symbolic=false)), reltol=1e-3)
-
-  
-  #@show sol.destats
-
+function sample_solution(sol, tVec, rot, N, derivative, derivative_order)
   y = zeros(ComplexF64, length(tVec), (N+1)^2)
+  irot = inv(rot)
 
   if !derivative
-    for ti=1:length(tVec)
-      y[ti, :] = sol(tVec[ti])
+    for (i,t) in enumerate(tVec)
+      y[i, :] = sol(t)
     end
   else
-    for ti=1:length(tVec)
-      y[ti, :] = (sol(tVec[ti]+eps()) - sol(tVec[ti])) / eps()
+    if typeof(tVec)<:StepRangeLen
+      # New finite difference formulas for numerical differentiation
+      # https://doi.org/10.1016/S0377-0427(99)00358-1
+      # more accurate for highly oscilating functions than standard finite differences
+      L = length(tVec)
+      t_0 = first(tVec)
+      h = step(tVec)
+      n = derivative_order
+
+      # sample solution at points in between the ones we aim to have
+      timepointsn = range(start=t_0-(2*n-1)/2*h,step=h, length=L+2*n-1)
+      yn = zeros(ComplexF64, length(timepointsn), (N+1)^2)
+      for (i,t) in enumerate(timepointsn)
+        yn[i,:] .= sol(t)
+      end
+      # finite difference formula is convolution like
+      # define corresponding kernel to act on the time dimension only
+      imkerneln = OffsetArray(reshape(vcat([-e(n,i) for i=n:-1:1],[e(n,i) for i=1:n])/h,2*n,1),-n:n-1,0:0)
+      # apply finite difference formula and retrieve points corresponding to time points in tVec
+      y .= imfilter(yn, imkerneln, ImageFiltering.Algorithm.FIR())[n+1:end-n+1,:]
+    else
+      for (i,t) in enumerate(tVec)
+        # accuracy limited to 1e-4 to 1e-5 for oscilating functions up to 1.25 MHz
+        y[i, :] = (sol(t+eps()) - sol(t)) / eps()
+      end 
     end
   end
 
@@ -374,55 +416,3 @@ end
 
 
 
-
-export generateStructuredFields
-function generateStructuredFields(params, t, Z; fieldType::FieldType, maxField, filterFactor=7)
-
-  if fieldType == RANDOM_FIELD
-    B = rand_interval(-1, 1, length(t), 3, Z)
-    for z=1:Z
-      for d=1:3
-        B[:,d,z] = imfilter(B[:,d,z], Kernel.gaussian((filterFactor,))) 
-        B[:,d,z] ./= maximum(abs.(B[:,d,z]))
-        B[:,d,z] .= maxField*(rand()*B[:,d,z] ) #.+ rand_interval(-1,1)*ones(Float32,length(t))*0.5)
-      end
-    end
-  elseif fieldType == HARMONIC_RANDOM_FIELD
-    B = zeros(Float32, length(t), 3, Z)
-    for z=1:Z
-      for d=1:3
-        γ = rand()
-        f = rand_interval(20e3, 50e3)
-        offset = rand_interval(-1,1)
-        phase = rand_interval(-π,π)
-        B[:,d,z] = maxField*(γ*sin.(2*π*f*t.+phase) .+ (1-γ)*offset)
-      end
-    end
-  elseif fieldType == HARMONIC_MPI_FIELD
-    B = zeros(Float32, length(t), 3, Z)
-    freq = params[:frequencies]
-    for z=1:Z
-      for d=1:3
-        B[:,d,z] = maxField*(sin.(2*pi*freq[d]*t) .+ (1-γ)*offset)
-      end
-    end    
-  else
-    error("field type $fieldType not supported!")
-  end
-
-  paramsInner = copy(params)
-
-  if haskey(params, :DCore) && typeof(params[:DCore]) <: Tuple
-    paramsInner[:DCore] = rand_interval(params[:DCore][1], params[:DCore][2], Z) 
-    useDCore = true
-  end
-
-  if haskey(params, :kAnis) && typeof(params[:kAnis]) <: Tuple
-    paramsInner[:kAnis] = [ rand_interval(params[:kAnis][1], params[:kAnis][2])*randAxis() for z=1:Z ]
-    #paramsInner[:kAnis] = [ rand_interval(params[:kAnis][1], params[:kAnis][2])*[1,0,0] for z=1:Z ]
-
-    useKAnis = true
-  end
-
-  return B, paramsInner
-end

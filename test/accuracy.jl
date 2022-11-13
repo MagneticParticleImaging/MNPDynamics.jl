@@ -13,14 +13,16 @@ DHydro = 20e-9;         # particle diameter in nm
 reltol = 1e-4
 abstol = 1e-6
 
-fx = 25000;
-tLength = 1000;       # length of time vector
-tMax = 4/fx;          # maximum evaluation time in seconds
+fb = 2.5e6
+fx = fb / 102
 
+samplingMultiplier = 2                          # sampling rate = samplingMultiplier*fb
+tLength = samplingMultiplier*102                # length of time vector
+tMax = (102-1/samplingMultiplier) / fb  # maximum evaluation time in seconds
 t = range(0,stop=tMax,length=tLength);
 
 # Magnetic field for simulation 
-B =  t -> (0.012*[sin(2*pi*fx*t); 0*t; 0*t]);
+B =  t -> SVector{3,Float64}(0.012*[sin(2*pi*fx*t), 0*t, 0*t]);
 
 yLangevin = simulationMNP(B, t; DCore, relaxation = NO_RELAXATION)
 yNeel = simulationMNP(B, t; DCore, kAnis, N, relaxation = NEEL,

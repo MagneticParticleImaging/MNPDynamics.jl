@@ -1,34 +1,31 @@
 using MNPDynamics
-using Plots
+using Plots, StaticArrays
+
+# Excitation frequencies
+fb = 2.5e6
+fx = fb / 102
+fy = fb / 96
+fz = fb / 99
+
+samplingMultiplier = 2                             # sampling rate = samplingMultiplier*fb
+tLength = samplingMultiplier*lcm(96,99,102)        # length of time vector
+tMax = (lcm(96,99,102)-1/samplingMultiplier) / fb  # maximum evaluation time in seconds
+t = range(0, stop=tMax, length=tLength);
 
 # Parameters
 p = Dict{Symbol,Any}()
 p[:DCore] = 20e-9         # particle diameter in nm
 p[:α] = 0.1               # damping coefficient
 p[:kAnis] = 1100*[1;0;0]  # anisotropy constant and anisotropy axis
-p[:N] = 20                # maximum spherical harmonics index to be considered
+p[:N] = 10                # maximum spherical harmonics index to be considered
 p[:relaxation] = NEEL     # relaxation mode
-p[:reltol] = 1e-6         # relative tolerance
-p[:abstol] = 1e-6         # absolute tolerance
-p[:tWarmup] = 0.00005     # warmup time
+p[:reltol] = 1e-5         # relative tolerance
+p[:abstol] = 1e-5         # absolute tolerance
+p[:tWarmup] = 1 / fb      # warmup time
 
+# Magnetic field for simulation
 const amplitude = 0.012
-# Excitation frequencies
-const fx = 2.5e6 / 102
-const fy = 2.5e6 / 96
-const fz = 2.5e6 / 99
-
-samplingRate = 2.5e6
-tLength = lcm(96,99,102);       # length of time vector
-tMax = tLength / samplingRate;  # maximum evaluation time in seconds
-
-@info tMax 
-@info tLength
-
-t = range(0, stop=tMax, length=tLength);
-
-# Magnetic field for simulation 
-B = t -> (amplitude*[sin(2*pi*fx*t); sin(2*pi*fy*t); sin(2*pi*fz*t)]);
+B = t -> SVector{3,Float64}(amplitude*[cospi(2*fx*t), cospi(2*fy*t), cospi(2*fz*t)])
 
 @time y = simulationMNP(B, t; p...)
 
