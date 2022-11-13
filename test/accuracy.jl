@@ -2,16 +2,16 @@
 
 eps = 1e-2
 
-# Parameters
-DCore = 20e-9;         # particle diameter in nm
-alpha = 0.1;           # damping coefficient
-kAnis = 0;             # anisotropy constant
-N = 20;                # maximum spherical harmonics index to be considered
-DHydro = 20e-9;         # particle diameter in nm
-η = 1e-5;
-
-reltol = 1e-4
-abstol = 1e-6
+p = Dict{Symbol,Any}()
+p[:DCore] = 20e-9         # particle diameter in nm
+p[:DHydro] = 20e-9        # particle diameter in nm
+p[:α] = 0.1               # damping coefficient
+p[:kAnis] = 0*[1;0;0]     # anisotropy constant and axis
+p[:N] = 20                # maximum spherical harmonics index to be considered
+p[:reltol] = 1e-6         # relative tolerance
+p[:abstol] = 1e-6         # absolute tolerance
+p[:tWarmup] = 0.00005     # warmup time
+p[:η] = 1e-5;
 
 fb = 2.5e6
 fx = fb / 102
@@ -24,15 +24,17 @@ t = range(0,stop=tMax,length=tLength);
 # Magnetic field for simulation 
 B =  t -> (0.012*[sin(2*pi*fx*t), 0*t, 0*t]);
 
-yLangevin = simulationMNP(B, t; DCore, relaxation = NO_RELAXATION)
-yNeel = simulationMNP(B, t; DCore, kAnis, N, relaxation = NEEL,
-                                  reltol, abstol)
+p[:relaxation] = NO_RELAXATION
+yLangevin = simulationMNP(B, t; p...)
+
+p[:relaxation] = NEEL
+yNeel = simulationMNP(B, t; p...)
 
 e = norm(yLangevin[:] - yNeel[:]) / norm(yLangevin[:])
 @test e < eps 
 
-yBrown = simulationMNP(B, t; DCore, DHydro, η, relaxation = BROWN,
-                           reltol, abstol)
+p[:relaxation] = BROWN
+yBrown = simulationMNP(B, t; p...)
 
 e = norm(yLangevin[:] - yNeel[:]) / norm(yLangevin[:])
 @test e < eps 
