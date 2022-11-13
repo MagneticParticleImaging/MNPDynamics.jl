@@ -176,12 +176,13 @@ we define the anisotropy axis on a grid as well:
 ```julia
 anisotropyAxis = vec([ oversampling*2.0.*((Tuple(x).-0.5)./nOffsets.-0.5) 
                        for x in CartesianIndices(nOffsets) ])
+p[:kAnis] = p[:kAnis]*anisotropyAxis
 ```
 
 Finally we perform the simulation and apply a Fourier transform along the time axis:
 
 ```julia
-smM = simulationMNPMultiParams(B, t, offsets; n=anisotropyAxis, p...)
+smM = simulationMNPMultiParams(B, t, offsets; p...)
 
 smMFT = reshape(rfft(smM, 1), :, 3, nOffsets...)
 ```

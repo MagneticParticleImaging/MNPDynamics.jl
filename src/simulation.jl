@@ -79,13 +79,23 @@ end
 
 ###############
 
+# forward declaration
+function simulationMNPFokkerPlank end
 
 """
   simulationMNP(B, t, offsets; kargs...) 
 """
-function simulationMNP(B::g, tVec;
-                       relaxation::RelaxationType = NEEL,
-                       n = [0.0;0.0;1.0], 
+function simulationMNP(B::g, t; kargs...) where g
+  if haskey(kargs, :neuralNetwork)
+    return simulationMNPNeuralNetwork(B, t, kargs[:neuralNetwork]; kargs...)
+  else
+    return simulationMNPFokkerPlank(B, t; kargs...)
+  end
+end
+
+
+function simulationMNPFokkerPlank(B::g, tVec;
+                       relaxation::RelaxationType = NEEL, 
                        MS = 474000.0, 
                        DCore = 20e-9, DHydro = DCore,
                        temp = 293.0, α = 0.1, kAnis = 625,
@@ -95,6 +105,14 @@ function simulationMNP(B::g, tVec;
                        solver = :FBDF,
                        derivative = false,
                        reltol = 1e-3, abstol=1e-6) where g
+
+  if typeof(kAnis) <: AbstractVector
+    kAnis_ = norm(kAnis)
+    n = norm(kAnis) > 0 ? normalize(kAnis) : [1.0, 0.0, 0.0]
+  else
+    kAnis_ = kAnis
+    n = [0.0;0.0;1.0]
+  end
 
   kB = 1.38064852e-23
   gamGyro = 1.75*10^11
@@ -106,8 +124,12 @@ function simulationMNP(B::g, tVec;
     τNeel = MS*VCore/(kB*temp*gamGyro)*(1+α^2)/(2*α)
     p1 = gamGyro/(1+α^2);
     p2 = α*gamGyro/(1+α^2);
-    p3 = 2*gamGyro/(1+α^2)*kAnis/MS;
-    p4 = 2*α*gamGyro/(1+α^2)*kAnis/MS;
+    p3 = 2*gamGyro/(1+α^2)*kAnis_/MS;
+    p4 = 2*α*gamGyro/(1+α^2)*kAnis_/MS;
+
+    if N == 0
+      N = max(10, round(Int, 10+kAnis_/5000*30) )
+    end
 
     rot = rotz(n)   # Rotation matrix that rotates n to the z axis
     irot = inv(rot) # Rotation matrix that rotates the z axis to n
@@ -168,12 +190,24 @@ function simulationMNP(B::g, tVec;
   dt = tVec[2] - tVec[1]
   prob = ODEProblem(ff, y0, (tVec[1]-tWarmup, tVec[end] + dt), p)
 
+  # The following tries to find out discontinuities which helps the solver
+  B_ = [B(t)[d] for d=1:3, t in tVec]
+  BD_ = vec(sum(abs.(diff(B_, dims=2)),dims=1) ./ maximum(abs.(B_)))
+  tstops = ((tVec[1:end-1])[BD_ .> 0.2]) # 0.2 is a magic number
+
   #@time 
   #sol = solve(prob, QNDF(), reltol=reltol, abstol=abstol)
   if solver == :FBDF
-    sol = solve(prob, FBDF(), reltol=reltol, abstol=abstol)
+    sol = solve(prob, FBDF(), reltol=reltol, abstol=abstol, tstops=tstops)#, tstops=tVec)
+
+    #choice_function(integrator) = (Int(integrator.dt<dt/10) + 1)
+    #alg_switch = CompositeAlgorithm((FBDF(), Rodas5(autodiff=false)), choice_function)
+    ##alg_switch = AutoSwitch(FBDF(), Rodas5(autodiff=false))
+    ##alg_switch = AutoTsit5(Rosenbrock23(autodiff=false))
+    #sol = solve(prob, alg_switch, reltol=reltol, abstol=abstol)
+
   elseif solver == :Rodas5
-    sol = solve(prob, Rodas5(autodiff=false), reltol=reltol)
+    sol = solve(prob, Rodas5(autodiff=false), reltol=reltol, abstol=abstol, tstops=tstops)
   else
     error("Solver $(solver) not available")
   end
@@ -218,6 +252,31 @@ function simulationMNP(B::g, tVec;
 end
 
 
+"""
+    simulationMNP(B::Matrix{T}, t; kargs...) 
+
+This version takes the fields in discretized form
+"""
+function simulationMNP(B::Matrix{T}, t; kargs...) where {T}
+
+  function fieldInterpolator(field, t)
+    function help_(field, t, d)
+      itp = interpolate(field[:,d], BSpline(Cubic(Flat(OnCell()))))
+      etp = extrapolate(itp, Flat())
+      sitp = scale(etp, t)
+      return sitp
+    end
+    return (help_(field,t,1), help_(field,t,2), help_(field,t,3))
+  end
+
+  magneticMoments = zeros(Float64, length(t), 3)
+
+  let param = fieldInterpolator(B, t)
+    BFunc = (t) -> ( [param[1](t), param[2](t), param[3](t)] )
+    magneticMoments[:,:] .= simulationMNP(BFunc, t; kargs...)
+  end
+  return magneticMoments
+end
 
 
 
@@ -228,27 +287,142 @@ end
   simulationMNPMultiParams(B, t, params; kargs...) 
 """
 function simulationMNPMultiParams(B::G, t, params::Vector{P}; kargs...) where {G,P}
+  numThreadsBLAS = BLAS.get_num_threads()
+  M = length(params)
 
-  M = size(params,1)
-
-  magnetizations = SharedArray{Float64}(length(t), 3, M)
+  magneticMoments = SharedArray{Float64}(length(t), 3, M)
   kargsInner = copy(kargs)
 
-  @sync @showprogress @distributed for m=1:M
-    let p=params[m]
-      B_ = t -> ( B(t, p) )
+  #try
+    BLAS.set_num_threads(1)
+    @sync @showprogress @distributed for m=1:M
+      let p=params[m]
+        B_ = t -> ( B(t, p) )
 
-      # this can be extended to more parameters
-      if haskey(kargs, :n) && eltype(kargs[:n]) <: Tuple
-        n = [kargs[:n][m]...]
-        kargsInner[:n] = norm(n) > 0 ? n ./ norm(n) : [1,0,0]
-        kargsInner[:kAnis] = norm(n)*kargs[:kAnis]
+        # this can be extended to more parameters
+        if haskey(kargs, :kAnis) && typeof(kargs[:kAnis]) <: AbstractVector  && eltype(kargs[:kAnis]) <: AbstractVector
+          kargsInner[:kAnis] = kargs[:kAnis][m]
+        end
+
+        if haskey(kargs, :DCore) && typeof(kargs[:DCore]) <: AbstractArray
+          kargsInner[:DCore] = kargs[:DCore][m]
+        end
+
+        y = simulationMNP(B_, t; kargsInner...)
+        magneticMoments[:,:,m] .= y
+        GC.gc()
       end
-
-      y = simulationMNP(B_, t; kargsInner...)
-      magnetizations[:,:,m] .= y
     end
+  #finally
+    BLAS.set_num_threads(numThreadsBLAS)
+  #end
+
+  return magneticMoments
+end
+
+
+"""
+  simulationMNPMultiParams(B::Vector{Matrix{T}}, t; kargs...) 
+
+This version takes the fields in discretized form
+"""
+function simulationMNPMultiParams(B::Array{T,3}, t; kargs...) where {T}
+
+  M = size(B,3)
+
+  BFunc = (t, param) -> ( [param[1](t), param[2](t), param[3](t)] )
+
+  function fieldInterpolator(field, t)
+    function help_(field, t, d)
+      itp = interpolate(field[:,d], BSpline(Cubic(Flat(OnCell()))))
+      etp = extrapolate(itp, Flat())
+      sitp = scale(etp, t)
+      return sitp
+    end
+    return (help_(field,t,1), help_(field,t,2), help_(field,t,3))
   end
 
-  return magnetizations
+  params = vec([ fieldInterpolator(B[:,:,z], t)  for z=1:M ])
+
+  return simulationMNPMultiParams(BFunc, t, params; kargs...)
+end
+
+function simulationMNPMultiParams(filename::AbstractString, B::Array{T,3}, t, params) where {T}
+  if !isfile(filename)
+    m = simulationMNPMultiParams(B, t; params...)
+    h5open(filename,"w") do h5
+      h5["magneticMoments"] = m
+      h5["time"] = collect(t)
+      h5["B"] = B
+      h5["DCore"] = params[:DCore]
+      h5["kAnis"] = eltype(params[:kAnis]) <: AbstractVector ? 
+              [params[:kAnis][z][d] for d=1:3, z=1:length(params[:kAnis])]  : params[:kAnis]
+    end
+  else
+    m, B = h5open(filename,"r") do h5
+      m = read(h5["magneticMoments"])
+      B = read(h5["B"])
+      params[:DCore] = read(h5["DCore"])
+      kAnis_ = read(h5["kAnis"])
+      params[:kAnis] = [ collect(kAnis_[:,z]) for z=1:size(kAnis_, 2) ]
+      (m, B)
+    end
+  end
+  return m, B
+end
+
+
+
+
+
+export generateStructuredFields
+function generateStructuredFields(params, t, Z; fieldType::FieldType, maxField, filterFactor=7)
+
+  if fieldType == RANDOM_FIELD
+    B = rand_interval(-1, 1, length(t), 3, Z)
+    for z=1:Z
+      for d=1:3
+        B[:,d,z] = imfilter(B[:,d,z], Kernel.gaussian((filterFactor,))) 
+        B[:,d,z] ./= maximum(abs.(B[:,d,z]))
+        B[:,d,z] .= maxField*(rand()*B[:,d,z] ) #.+ rand_interval(-1,1)*ones(Float32,length(t))*0.5)
+      end
+    end
+  elseif fieldType == HARMONIC_RANDOM_FIELD
+    B = zeros(Float32, length(t), 3, Z)
+    for z=1:Z
+      for d=1:3
+        γ = rand()
+        f = rand_interval(20e3, 50e3)
+        offset = rand_interval(-1,1)
+        phase = rand_interval(-π,π)
+        B[:,d,z] = maxField*(γ*sin.(2*π*f*t.+phase) .+ (1-γ)*offset)
+      end
+    end
+  elseif fieldType == HARMONIC_MPI_FIELD
+    B = zeros(Float32, length(t), 3, Z)
+    freq = params[:frequencies]
+    for z=1:Z
+      for d=1:3
+        B[:,d,z] = maxField*(sin.(2*pi*freq[d]*t) .+ (1-γ)*offset)
+      end
+    end    
+  else
+    error("field type $fieldType not supported!")
+  end
+
+  paramsInner = copy(params)
+
+  if haskey(params, :DCore) && typeof(params[:DCore]) <: Tuple
+    paramsInner[:DCore] = rand_interval(params[:DCore][1], params[:DCore][2], Z) 
+    useDCore = true
+  end
+
+  if haskey(params, :kAnis) && typeof(params[:kAnis]) <: Tuple
+    paramsInner[:kAnis] = [ rand_interval(params[:kAnis][1], params[:kAnis][2])*randAxis() for z=1:Z ]
+    #paramsInner[:kAnis] = [ rand_interval(params[:kAnis][1], params[:kAnis][2])*[1,0,0] for z=1:Z ]
+
+    useKAnis = true
+  end
+
+  return B, paramsInner
 end

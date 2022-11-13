@@ -36,9 +36,8 @@ savefig("simpleNoRelaxation.svg")
 p = Dict{Symbol,Any}()
 p[:DCore] = 20e-9         # particle diameter in nm
 p[:α] = 0.1               # damping coefficient
-p[:kAnis] = 11000          # anisotropy constant
+p[:kAnis] = 11000*[1;0;0] # anisotropy constant and axis
 p[:N] = 20                # maximum spherical harmonics index to be considered
-p[:n] = [1;0;0]           # anisotropy axis
 p[:relaxation] = NEEL     # relaxation mode
 p[:reltol] = 1e-6         # relative tolerance
 p[:abstol] = 1e-6         # absolute tolerance
@@ -61,9 +60,8 @@ savefig("neelRelaxation.svg")
 p = Dict{Symbol,Any}()
 p[:DCore] = 20e-9         # particle diameter in nm
 p[:α] = 0.1               # damping coefficient
-p[:kAnis] = 11000          # anisotropy constant
+p[:kAnis] = 11000*[1;0;0] # anisotropy constant and axis
 p[:N] = 20                # maximum spherical harmonics index to be considered
-p[:n] = [1;0;0]           # anisotropy axis
 p[:relaxation] = NEEL     # relaxation mode
 p[:reltol] = 1e-6         # relative tolerance
 p[:abstol] = 1e-6         # absolute tolerance

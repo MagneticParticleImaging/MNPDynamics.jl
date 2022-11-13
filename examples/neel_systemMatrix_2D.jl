@@ -35,17 +35,10 @@ oversampling = 1.25
 offsets = vec([ oversampling*amplitude.*2.0.*((Tuple(x).-0.5)./nOffsets.-0.5)  for x in CartesianIndices(nOffsets) ])
 anisotropyAxis = vec([ oversampling*2.0.*((Tuple(x).-0.5)./nOffsets.-0.5)  for x in CartesianIndices(nOffsets) ])
 
-@time smM = simulationMNPMultiParams(B, t, offsets; n=anisotropyAxis, p...)
+p[:kAnis] = p[:kAnis]*anisotropyAxis
+
+@time smM = simulationMNPMultiParams(B, t, offsets; p...)
 
 smMFT = reshape(rfft(smM, 1), :, 3, nOffsets...)
 
-pl = Any[]
-for my=1:8
-  for mx=1:8
-    push!(pl, heatmap(abs.(smMFT[(mx-1)*16+(my-1)*17+1, 1, :, :, 1]), 
-            c=:viridis, axis=nothing, colorbar=nothing,
-            annotations = (2, 4, Plots.text("$mx,$my", :white,:left)) ))
-  end
-end
-plot(pl..., layout=(8,8), size=(1000,1000))
-savefig("systemMatrix.svg")
+plot2DSM(smMFT, 8, 8; filename="systemMatrix.svg")
