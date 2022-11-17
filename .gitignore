@@ -10,5 +10,6 @@ tmp
 *.pdf
 *.svg
 *.bin
+*.png
 
 Manifest.toml

@@ -13,7 +13,7 @@ p[:tWarmup] = 0.00005      # warmup time
 p[:derivative] = false
 p[:solver] = :FBDF         # Use more stable solver
 
-Z = 2000
+Z = 5000
 ZTrain = round(Int, Z*0.8)
 ZTest = Z - ZTrain
 snippetLength = 200
@@ -21,4 +21,4 @@ samplingRate = 2.5e6
 tMax = snippetLength / samplingRate; # maximum evaluation time in seconds
 
 tSnippet = range(0, stop=tMax, length=snippetLength);
-maxField = 20e-3
+maxField = 30e-3

@@ -9,10 +9,10 @@ include("params.jl")
 
 filenameTrain = "trainData.h5"
 
-BTrain, pTrain = generateStructuredFields(p, tSnippet, Z; maxField=maxField, 
-                     fieldType=RANDOM_FIELD, filterFactor=20)
 #BTrain, pTrain = generateStructuredFields(p, tSnippet, Z; maxField=maxField, 
-#                     fieldType=HARMONIC_RANDOM_FIELD, filterFactor=20)
+#                     fieldType=RANDOM_FIELD, filterFactor=10)
+BTrain, pTrain = generateStructuredFields(p, tSnippet, Z; maxField=maxField, 
+                     fieldType=HARMONIC_RANDOM_FIELD, filterFactor=20)
                      
 mTrain, BTrain = simulationMNPMultiParams(filenameTrain, BTrain, tSnippet, pTrain)
 
@@ -34,7 +34,7 @@ bs = 20# 4
 trainLoader = DataLoader((X[:,:,1:ZTrain],Y[:,:,1:ZTrain]), batchsize=bs, shuffle=true)
 testLoader = DataLoader((X[:,:,(ZTrain+1):end],Y[:,:,(ZTrain+1):end]), batchsize=bs, shuffle=false)
 
-modes = 24 #24
+modes = 12 #24
 width = 32
 model = make_neural_operator_model(inputChan, outputChan, modes, width, NeuralMNP.NeuralOperators.FourierTransform)
 
@@ -44,7 +44,7 @@ stepSize = 100
 #opt = Flux.Optimiser(ExpDecay(η, γ, stepSize, 1f-6), Adam())
 opt = Adam(η)
 
-NeuralMNP.train(model, opt, trainLoader, testLoader, nY; epochs=30)
+NeuralMNP.train(model, opt, trainLoader, testLoader, nY; epochs=200)
 
 NOModel = NeuralNetwork(model, nX, nY, p, snippetLength)
 
