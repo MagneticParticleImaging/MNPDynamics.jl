@@ -8,7 +8,7 @@ function generateStructuredFields(params, t, Z; fieldType::FieldType, maxField, 
       for d=1:3
         B[:,d,z] = imfilter(B[:,d,z], Kernel.gaussian((filterFactor,))) 
         B[:,d,z] ./= maximum(abs.(B[:,d,z]))
-        B[:,d,z] .= maxField*(rand()*B[:,d,z] ) #.+ rand_interval(-1,1)*ones(Float32,length(t))*0.5)
+        B[:,d,z] .= maxField*(rand()*B[:,d,z] ) .+ 0.5*maxField*rand_interval(-1,1)*ones(Float32,length(t))
       end
     end
   elseif fieldType == HARMONIC_RANDOM_FIELD

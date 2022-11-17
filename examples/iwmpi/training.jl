@@ -1,17 +1,18 @@
-@time using MNPDynamics
+using MNPDynamics
+using NeuralMNP
 using Plots, Measures
 using FFTW
 using Flux, MLUtils
-using BSON
+using Serialization
 
 include("params.jl")
 
 filenameTrain = "trainData.h5"
 
-#BTrain, pTrain = generateStructuredFields(p, tSnippet, Z; maxField=maxField, 
-#                     fieldType=RANDOM_FIELD, filterFactor=20)
 BTrain, pTrain = generateStructuredFields(p, tSnippet, Z; maxField=maxField, 
-                     fieldType=HARMONIC_RANDOM_FIELD, filterFactor=20)
+                     fieldType=RANDOM_FIELD, filterFactor=20)
+#BTrain, pTrain = generateStructuredFields(p, tSnippet, Z; maxField=maxField, 
+#                     fieldType=HARMONIC_RANDOM_FIELD, filterFactor=20)
                      
 mTrain, BTrain = simulationMNPMultiParams(filenameTrain, BTrain, tSnippet, pTrain)
 
@@ -33,11 +34,11 @@ bs = 20# 4
 trainLoader = DataLoader((X[:,:,1:ZTrain],Y[:,:,1:ZTrain]), batchsize=bs, shuffle=true)
 testLoader = DataLoader((X[:,:,(ZTrain+1):end],Y[:,:,(ZTrain+1):end]), batchsize=bs, shuffle=false)
 
-modes = 8 #24
+modes = 24 #24
 width = 32
-model = make_neural_operator_model(inputChan, outputChan, modes, width, MNPDynamics.NeuralOperators.FourierTransform)
+model = make_neural_operator_model(inputChan, outputChan, modes, width, NeuralMNP.NeuralOperators.FourierTransform)
 
-η = 1f-2
+η = 1f-4
 γ = 0.5
 stepSize = 100
 #opt = Flux.Optimiser(ExpDecay(η, γ, stepSize, 1f-6), Adam())
@@ -47,8 +48,8 @@ NeuralMNP.train(model, opt, trainLoader, testLoader, nY; epochs=30)
 
 NOModel = NeuralNetwork(model, nX, nY, p, snippetLength)
 
-filenameModel = "model.bson"
-bson(filenameModel, model = NOModel);
+filenameModel = "model.bin"
+serialize(filenameModel, NOModel);
 
 
 #=

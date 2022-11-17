@@ -8,5 +8,7 @@ tmp
 *.h5
 *.bson
 *.pdf
+*.svg
+*.bin
 
 Manifest.toml

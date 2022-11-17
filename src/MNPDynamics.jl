@@ -15,6 +15,8 @@ using SharedArrays
 
 using ProgressMeter
 
+using HDF5
+
 
 ## sorting algorithms ##
 
@@ -26,7 +28,7 @@ struct LangevinFunctionAlg <: MNPAlgorithm end
 const FokkerPlanck = FokkerPlanckAlg()
 const LangevinFunction = LangevinFunctionAlg()
 
-export FokkerPlanck, LangevinFunction
+export MNPAlgorithm, FokkerPlanck, LangevinFunction
 
 @enum RelaxationType begin
   NEEL
@@ -36,19 +38,10 @@ end
 
 export NEEL, BROWN, NO_RELAXATION
 
-@enum FieldType begin
-  RANDOM_FIELD
-  HARMONIC_RANDOM_FIELD
-  HARMONIC_MPI_FIELD
-end
-
-export NEEL, RANDOM_FIELD, HARMONIC_RANDOM_FIELD, HARMONIC_MPI_FIELD
-
 include("utils.jl")
 include("sparseMatrixSetup.jl")
 include("simulation.jl")
 include("multiParams.jl")
-include("magneticFields.jl")
 
 export simulationMNP, simulationMNPMultiParams
 
