@@ -20,7 +20,7 @@ function smTest(params, maxField, samplingRate, anisotropyAxis=nothing)
   
   nOffsets = (30, 30, 1)
 
-  if haskey(params, :neuralNetwork) && params[:neuralNetwork]
+  if haskey(params, :neuralNetwork) && params[:neuralNetwork] != nothing
     factor = 1.0
   else
     factor = 1250.0
