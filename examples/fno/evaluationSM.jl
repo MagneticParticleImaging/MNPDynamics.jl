@@ -19,12 +19,8 @@ function smTest(params, maxField, samplingRate, anisotropyAxis=nothing)
   BSM = (t, offset) -> (maxField*[sin(2*pi*fx*t), sin(2*pi*fy*t), 0] .+ offset )
   
   nOffsets = (30, 30, 1)
-
-  if haskey(params, :neuralNetwork) && params[:neuralNetwork] != nothing
-    factor = 1.0
-  else
-    factor = 1250.0
-  end
+    
+  factor = 1250.0
   
   oversampling = 1.25
   offsets = vec([ oversampling*maxField.*2.0.*((Tuple(x).-0.5)./nOffsets.-0.5)  for x in CartesianIndices(nOffsets) ])

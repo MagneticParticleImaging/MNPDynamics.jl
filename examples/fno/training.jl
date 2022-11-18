@@ -9,13 +9,13 @@ using Serialization
 
 include("params.jl")
 
-BTrain = rand(range(-1,1,length=1000),snippetLength,3,Z)
+BTrain_ = rand(range(-1,1,length=1000),snippetLength,3,Z)
 for z=1:Z
   for l=1:3
     filtFactor = rand(range(4,20,length=40))
-    BTrain[:,l,z] = imfilter(BTrain[:,l,z],Kernel.gaussian((filtFactor,))) 
-    BTrain[:,l,z] ./= maximum(abs.(BTrain[:,l,z]))
-    BTrain[:,l,z] .= maxField*(rand()*BTrain[:,l,z] .+ 
+    BTrain_[:,l,z] = imfilter(BTrain_[:,l,z],Kernel.gaussian((filtFactor,))) 
+    BTrain_[:,l,z] ./= maximum(abs.(BTrain_[:,l,z]))
+    BTrain_[:,l,z] .= maxField*(rand()*BTrain_[:,l,z] .+ 
                                 0.5*rand(range(-1,1,length=1000))*ones(Float32,snippetLength))
   end
 end
@@ -24,7 +24,7 @@ anisotropyAxis = vec([ rand()*NeuralMNP.randAxis() for z=1:Z ])
 p[:kAnis] =  kAnis*anisotropyAxis
 
 filenameTrain = "trainData.h5"
-@time mTrain, BTrain = simulationMNPMultiParams(filenameTrain, BTrain, tSnippet, p)
+@time mTrain, BTrain = simulationMNPMultiParams(filenameTrain, BTrain_, tSnippet, p)
 
 ######
 
@@ -35,7 +35,7 @@ X = zeros(Float32, snippetLength, inputChan, Z)
 Y = zeros(Float32, snippetLength, outputChan, Z)
 
 for z=1:Z
-  n_ = anisotropyAxis[z]
+  n_ = p[:kAnis][z]
 
   Bx = [BTrain[t_,1,z] for t_ in 1:snippetLength]
   By = [BTrain[t_,2,z] for t_ in 1:snippetLength]
