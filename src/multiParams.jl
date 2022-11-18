@@ -12,6 +12,7 @@ function simulationMNPMultiParams(B::G, t, params::Vector{P}; kargs...) where {G
   #try
     BLAS.set_num_threads(1)
 
+    #for m=1:M
     Threads.@threads for m=1:M
     #@sync @distributed for m=1:M
       let p=params[m], kargsInner=copy(kargs)
