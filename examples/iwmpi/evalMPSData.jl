@@ -22,7 +22,7 @@ function plotExampleSignals(model, kAnis=1100, offset=[0,0,0])
   amplitude = 0.012
   fx = 25000;
   tLength = 200;       # length of time vector
-  tMax = 1/fx;          # maximum evaluation time in seconds
+  tMax = 2/fx;          # maximum evaluation time in seconds
 
   t = range(0,stop=tMax,length=tLength);
 
@@ -69,7 +69,7 @@ function plotExampleSignals(model, kAnis=1100, offset=[0,0,0])
 
   pl3 = plot()
   p[:DCore] = 20e-9         # particle diameter in nm
-  p[:kAnis] = 1000*[1;0;0]
+  p[:kAnis] = 0*1000*[1;0;0]
   off = collect([-12, -6, 6, 12])
 
   for k=1:length(off)
