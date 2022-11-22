@@ -73,7 +73,7 @@ epochs = 100
 
 opt = Flux.Optimiser(ExpDecay(η, γ, stepSize, 1f-5), Adam())
 
-NeuralMNP.train(model, opt, trainLoader, testLoader, nY; epochs)
+model = NeuralMNP.train(model, opt, trainLoader, testLoader, nY; epochs)
 
 NOModel = NeuralMNP.NeuralNetwork(model, nX, nY, Dict{Symbol,Any}(), snippetLength)
 
