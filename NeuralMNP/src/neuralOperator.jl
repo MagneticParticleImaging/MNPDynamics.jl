@@ -193,7 +193,7 @@ end
 
 function prepareTrainData(params, t, B, m; useTime = true)
   X = prepareTrainData(params, t, B; useTime)
-  Y = m
+  Y = Float32.(m)
   return X, Y
 end
 

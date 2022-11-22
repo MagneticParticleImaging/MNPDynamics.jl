@@ -44,10 +44,10 @@ function smTest(params, maxField, samplingRate, anisotropyAxis=nothing)
       Bz = [BSM(t_, off)[3] for t_ in tSM]
       n_ = anisotropyAxis[z]
 
-      t_ = range(0,1,length=tLengthSM)
+      #t_ = range(0,1,length=tLengthSM)
 
       XLongTest = cat( Bx, By, Bz, n_[1]*ones(Float32, tLengthSM), n_[2]*ones(Float32, tLengthSM),
-                      n_[3]*ones(Float32, tLengthSM), t_, dims=2)
+                      n_[3]*ones(Float32, tLengthSM), dims=2)
 
       q = NeuralMNP.applyToArbitrarySignal(params[:neuralNetwork], XLongTest)
       sm[:,:,z] .= q
