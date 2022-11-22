@@ -24,3 +24,5 @@ tMax = snippetLength / samplingRate; # maximum evaluation time in seconds
 tSnippet = range(0, step=1/samplingRate, length=snippetLength);
 tSnippetLong = range(-snippetLength/samplingRate, step=1/samplingRate, length=2*snippetLength);
 maxField = 0.012
+
+device = cpu
