@@ -1,4 +1,4 @@
-
+import Adapt
 
 
 ### model generator ###
@@ -28,6 +28,8 @@ struct NormalizationParams{U}
   std::U
 end
 
+Adapt.@adapt_structure NormalizationParams
+
 export normalizeData
 function normalizeData(X; dims=3)
   xmean = mean(X; dims)
@@ -36,35 +38,48 @@ function normalizeData(X; dims=3)
 end
 
 export trafo
-function trafo(X, normalization::NormalizationParams, )
-  return (X .- normalization.mean) ./ (normalization.std .+ 1e-12)
+trafo(X, normalization::NormalizationParams) = trafo(X, normalization.mean, normalization.std)
+
+function trafo(X, mean::AbstractArray{T}, std::AbstractArray{T}) where T
+  return (X .- mean) ./ (std .+ 1f-12)
 end
 
 export back
-function back(X, normalization::NormalizationParams)
-  return X .* (normalization.std .+ 1e-12) .+ normalization.mean
+back(X, normalization::NormalizationParams) = back(X, normalization.mean, normalization.std)
+
+function back(X::AbstractArray{T}, mean::AbstractArray{T}, std::AbstractArray{T}) where T
+  return X .* (std .+ 1f-12) .+ mean
 end
 
 
 ### loss functions ###
 
-function loss(model, x::AbstractArray, y::AbstractArray, normalization::NormalizationParams)
-  yPred = back(model(x), normalization)  
-  y = back(y, normalization)
+# function loss(model, x::AbstractArray, y::AbstractArray, normalization::NormalizationParams)
+#   yPred = back(model(x), normalization)  
+#   y = back(y, normalization)
 
-  r = Float32(0.0)
-  for l=1:size(y,3)
-    r += norm(vec(yPred[:,:,l] .- y[:,:,l])) / norm(vec(y[:,:,l]))
-  end
-  return r / size(y,3)
+#   r = Float32(0.0)
+#   for l=1:size(y,3)
+#     r += norm(vec(yPred[:,:,l] .- y[:,:,l])) / norm(vec(y[:,:,l]))
+#   end
+#   return r / size(y,3)
+# end
+
+norm_l2(x::AbstractArray; dims) = sqrt.(sum(abs2, x; dims=dims))
+
+function loss(model, x::AbstractArray, y::AbstractArray, normalization::NormalizationParams)
+  ŷ = back(model(x), normalization.mean, normalization.std)  
+  y = back(y, normalization.mean, normalization.std)
+
+  return mean( norm_l2(ŷ.-y, dims=[1,2]) ./ norm_l2(y, dims=[1,2]) )
 end
 
-function loss(model, loader::DataLoader, normalization::NormalizationParams)
+function loss(model, loader::DataLoader, normalization::NormalizationParams, device=cpu)
   l = Float32(0.0)
   Q = 1000
   q = 0
   for (x,y) in loader
-    l += loss(model, x, y, normalization)
+    l += loss(model, x |> device, y |> device, normalization)
     q +=1
     if q==Q
       break
@@ -76,8 +91,11 @@ end
 ### training function ###
 
 function train(model, opt, trainLoader, testLoader, normalization::NormalizationParams; 
-               epochs::Integer = 10, plotting = true)
+               epochs::Integer=10, plotStep=1, plotting=false, device=cpu)
 
+  model = model |> device
+  normalization = normalization |> device
+               
   trainLoss = Float32(0.0)
 
   ps = Flux.params(model)	
@@ -86,10 +104,11 @@ function train(model, opt, trainLoader, testLoader, normalization::Normalization
 
 		trainLoss = Float32(0.0)
     t_ = @elapsed begin
-      @showprogress "Epoch $epoch" for (x,y) in trainLoader
+      # @showprogress "Epoch $epoch" for (x,y) in trainLoader
+      for (x,y) in trainLoader
 
         loss_, gs = Flux.withgradient(ps) do
-          loss(model, x, y, normalization)
+          loss(model, x |> device, y |> device, normalization)
         end
         trainLoss += loss_
         Flux.Optimise.update!(opt, ps, gs)
@@ -97,25 +116,25 @@ function train(model, opt, trainLoader, testLoader, normalization::Normalization
     end
 		trainLoss /= length(trainLoader)
 
-		testLoss = loss(model, testLoader, normalization)
+		testLoss = loss(model, testLoader, normalization, device)
 
     println("epoch=$epoch time=$(t_) trainLoss=$trainLoss  testLoss=$testLoss")
 
-    if plotting
+    if epoch%plotStep==0
       test_x, test_y = first(testLoader)
       train_x, train_y = first(trainLoader)
 
-      test_y_true = sqrt.(sum(abs.(back(test_y, normalization)).^2, dims=2))
-      test_y_pred = sqrt.(sum(abs.(back(model(test_x), normalization)).^2, dims=2))
-      train_y_true = sqrt.(sum(abs.(back(train_y, normalization)).^2, dims=2))
-      train_y_pred = sqrt.(sum(abs.(back(model(train_x), normalization)).^2, dims=2))
+      test_y_true = sqrt.(sum(abs.(back(test_y |> device, normalization)).^2, dims=2)) |> cpu
+      test_y_pred = sqrt.(sum(abs.(back(model(test_x|> device), normalization)).^2, dims=2)) |> cpu
+      train_y_true = sqrt.(sum(abs.(back(train_y |> device, normalization)).^2, dims=2)) |> cpu
+      train_y_pred = sqrt.(sum(abs.(back(model(train_x |> device), normalization)).^2, dims=2)) |> cpu
 
       p1 = plot(test_y_true[:,1,1], label="true"); plot!(p1,test_y_pred[:,1,1], label="predict", title="test")
       p2 = plot(train_y_true[:,1,1],label="true"); plot!(p2,train_y_pred[:,1,1], label="predict", title="train")
       display(plot(p1, p2, layout=(2,1)))
     end
 	end
-	return trainLoss
+  return model |> cpu
 end
 
 
@@ -243,13 +262,17 @@ end
 
 hannWindow(M) = (1.0 .- cos.(2*π/(M-1)*(0:(M-1))))/(M-1)*M .+ 0.001
 
-function applyToArbitrarySignal(neuralNetwork::NeuralNetwork, X)
+function applyToArbitrarySignal(neuralNetwork::NeuralNetwork, X, device=cpu)
   snippetLength = neuralNetwork.timeLength
   N = size(X,1)
-  numPatches = ceil(Int, N/snippetLength)
   stepSize = snippetLength ÷ 2
 
-  win = hannWindow(snippetLength) 
+  win = hannWindow(snippetLength)
+  
+  # move model to GPU/CPU
+  model = neuralNetwork.model |> device
+  nX = neuralNetwork.normalizationX |> device
+  nY = neuralNetwork.normalizationY |> device
 
   weights = zeros(Float32, N)
   output = zeros(Float32, N, 3)
@@ -262,10 +285,10 @@ function applyToArbitrarySignal(neuralNetwork::NeuralNetwork, X)
       r = (N-snippetLength+1):N
       stop = true
     end
-    xc = X[r,:,1:1]
-    xc = trafo(xc, neuralNetwork.normalizationX)
-    yc = back(neuralNetwork.model(Float32.(xc)), neuralNetwork.normalizationY)
-    output[r,:] .+= yc[:,:,1].*win 
+    xc = Float32.(X[r,:,1:1]) |> device
+    xc = trafo(xc, nX)
+    yc = back(model(xc), nY) |> cpu
+    output[r,:] .+= yc[:,:,1].*win |> cpu
     weights[r] += win
     currStart += stepSize
 
