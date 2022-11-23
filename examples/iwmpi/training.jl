@@ -50,15 +50,16 @@ width = 32
 model = NeuralMNP.make_neural_operator_model(inputChan, outputChan, modes, width, NeuralMNP.NeuralOperators.FourierTransform)
 
 
-η = 1f-3
+ηs = [1f-3,1f-4,1f-5]
 γ = 0.5
 stepSize = 30
 epochs = 100
 
 #opt = Flux.Optimiser(ExpDecay(η, γ, stepSize, 1f-5), Adam())
-opt = Adam(η)
-
-model = NeuralMNP.train(model, opt, trainLoader, testLoader, nY; epochs, device)
+for η in ηs
+  global opt = Adam(η)
+  global model = NeuralMNP.train(model, opt, trainLoader, testLoader, nY; epochs, device)
+end
 
 NOModel = NeuralMNP.NeuralNetwork(model, nX, nY, Dict{Symbol,Any}(), snippetLength)
 
