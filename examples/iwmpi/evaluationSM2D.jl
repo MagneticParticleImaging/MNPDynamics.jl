@@ -2,6 +2,8 @@ using MNPDynamics
 using NeuralMNP
 using Plots, Measures
 using FFTW, HDF5
+using Serialization
+using Flux
 
 include("params.jl")
 include("../visualization.jl")
@@ -60,43 +62,41 @@ function smTest(params, maxField, samplingRate, anisotropyAxis=nothing)
   
 end
 
+function calcSMs(p)
+
+  sm = Dict{Symbol,Any}()
+
+  @time sm[:FluidFNO] = smTest(p, maxField, samplingRate);
+  α = 1.5
+  @time sm[:Immobilized135FNO] = smTest(p, maxField, samplingRate, (1.1*cos(pi/2*α), 1.1*sin(pi/2*α), 0.0));
+  α = 0.5
+  @time sm[:Immobilized45FNO] = smTest(p, maxField, samplingRate, (1.1*cos(pi/2*α), 1.1*sin(pi/2*α), 0.0));
+
+  delete!(p, :neuralNetwork)
+  @time sm[:FluidFokkerPlanck] = smTest(p, maxField, samplingRate);
+  α = 1.5
+  @time sm[:Immobilized135FokkerPlanck] = smTest(p, maxField, samplingRate, (1.1*cos(pi/2*α), 1.1*sin(pi/2*α), 0.0));
+  α = 0.5
+  @time sm[:Immobilized45FokkerPlanck] = smTest(p, maxField, samplingRate, (1.1*cos(pi/2*α), 1.1*sin(pi/2*α), 0.0));
+
+  return sm
+end
 
 filenameModel = "model.bin"
 NOModel = deserialize(filenameModel)
-
 p[:neuralNetwork] = NOModel
-@time sm = smTest(p, maxField, samplingRate);
-smPred = reshape(sm,:,3,30,30);
-smMFTPred = rfft(smPred,1);
-plot2DSM(smMFTPred, 5, 5; filename="systemMatrixFluidFNO.png")
 
-α = 1.5
-@time sm = smTest(p, maxField, samplingRate, (1.1*cos(pi/2*α), 1.1*sin(pi/2*α), 0.0));
-smPred = reshape(sm,:,3,30,30);
-smMFTPred = rfft(smPred,1);
-plot2DSM(smMFTPred, 5, 5; filename="systemMatrixImmobilized135FNO.png")
+filenameSMs = "sm.bin"
+if isfile(filenameSMs)
+  sm = deserialize(filenameSMs)
+else
+  sm = calcSMs(p)
+  serialize(filenameSMs, sm)
+end
 
-α = 0.5
-@time sm = smTest(p, maxField, samplingRate, (1.1*cos(pi/2*α), 1.1*sin(pi/2*α), 0.0));
-smPred = reshape(sm,:,3,30,30);
-smMFTPred = rfft(smPred,1);
-plot2DSM(smMFTPred, 5, 5; filename="systemMatrixImmobilized45FNO.png")
-
-
-delete!(p, :neuralNetwork)
-@time sm = smTest(p, maxField, samplingRate);
-smPred = reshape(sm,:,3,30,30);
-smMFTPred = rfft(smPred,1);
-plot2DSM(smMFTPred, 5, 5; filename="systemMatrixFluidFokkerPlanck.png")
-
-α = 1.5
-@time sm = smTest(p, maxField, samplingRate, (1.1*cos(pi/2*α), 1.1*sin(pi/2*α), 0.0));
-smPred = reshape(sm,:,3,30,30);
-smMFTPred = rfft(smPred,1);
-plot2DSM(smMFTPred, 5, 5; filename="systemMatrixImmobilized135FokkerPlanck.png")
-
-α = 0.5
-@time sm = smTest(p, maxField, samplingRate, (1.1*cos(pi/2*α), 1.1*sin(pi/2*α), 0.0));
-smPred = reshape(sm,:,3,30,30);
-smMFTPred = rfft(smPred,1);
-plot2DSM(smMFTPred, 5, 5; filename="systemMatrixImmobilized45FokkerPlanck.png")
+plot2DSM(rfft(reshape(sm[:FluidFNO],:,3,30,30),1), 5, 5; filename="systemMatrixFluidFNO.png")
+plot2DSM(rfft(reshape(sm[:Immobilized135FNO],:,3,30,30),1), 5, 5; filename="systemMatrixImmobilized135FNO.png")
+plot2DSM(rfft(reshape(sm[:Immobilized45FNO],:,3,30,30),1), 5, 5; filename="systemMatrixImmobilized45FNO.png")
+plot2DSM(rfft(reshape(sm[:FluidFokkerPlanck],:,3,30,30),1), 5, 5; filename="systemMatrixFluidFokkerPlanck.png")
+plot2DSM(rfft(reshape(sm[:Immobilized135FokkerPlanck],:,3,30,30),1), 5, 5; filename="systemMatrixImmobilized135FokkerPlanck.png")
+plot2DSM(rfft(reshape(sm[:Immobilized45FokkerPlanck],:,3,30,30),1), 5, 5; filename="systemMatrixImmobilized45FokkerPlanck.png")

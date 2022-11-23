@@ -50,7 +50,7 @@ width = 32
 model = NeuralMNP.make_neural_operator_model(inputChan, outputChan, modes, width, NeuralMNP.NeuralOperators.FourierTransform)
 
 
-η = 1f-5
+η = 1f-3
 γ = 0.5
 stepSize = 30
 epochs = 100
