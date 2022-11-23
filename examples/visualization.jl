@@ -4,9 +4,10 @@ function plot2DSM(smFT, MX, MY; filename=nothing)
   pl = Any[]
   for my=1:MY
     for mx=1:MX
-      push!(pl, heatmap(ImageUtils.complexColoring(smFT[(mx-1)*16+(my-1)*17+1, 1, :, :, 1]), 
+      push!(pl, heatmap(ImageUtils.complexColoring(collect(
+          transpose(smFT[(mx-1)*16+(my-1)*17+1, 1, :, :, 1]))), 
               c=:viridis, axis=nothing, colorbar=nothing,
-              annotations = (2, 4, Plots.text("$mx,$my", :white,:left,"Helvetica Bold", 20)) ))
+              annotations = (2, 4, Plots.text("$(mx-1),$(my-1)", :white,:left,"Helvetica Bold", 20)) ))
     end
   end
   plot(pl..., layout=(MX,MY), size=(1000,1000))

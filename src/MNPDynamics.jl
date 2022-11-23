@@ -12,6 +12,7 @@ using OffsetArrays
 
 using Distributed
 using SharedArrays
+using StaticArrays
 
 using ProgressMeter
 

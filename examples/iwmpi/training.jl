@@ -15,8 +15,8 @@ for z=1:Z
     filtFactor = rand(range(4,20,length=40))
     BTrain_[:,l,z] = imfilter(BTrain_[:,l,z],Kernel.gaussian((filtFactor,))) 
     BTrain_[:,l,z] ./= maximum(abs.(BTrain_[:,l,z]))
-    BTrain_[:,l,z] .= maxField*(rand()*BTrain_[:,l,z] .+ 
-                                0.5*rand(range(-1,1,length=1000))*ones(Float32,snippetLength))
+    BTrain_[:,l,z] .= maxField*(rand()*BTrain_[:,l,z]) # .+ 
+                                #0.5*rand(range(-1,1,length=1000))*ones(Float32,snippetLength))
   end
 end
 
