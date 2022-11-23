@@ -8,13 +8,13 @@ function simulationMNPMultiParams(B::G, t, params::Vector{P}; kargs...) where {G
 
   magneticMoments = SharedArray{Float64}(length(t), 3, M)
 
-  prog = Progress(M, 1, "Simulation")
+  #prog = Progress(M, 1, "Simulation")
   #try
     BLAS.set_num_threads(1)
 
     #for m=1:M
-    Threads.@threads for m=1:M
-    #@sync @distributed for m=1:M
+    #Threads.@threads for m=1:M
+    @sync @showprogress @distributed for m=1:M
       let p=params[m], kargsInner=copy(kargs)
         B_ = t -> ( B(t, p) )
 
@@ -32,13 +32,13 @@ function simulationMNPMultiParams(B::G, t, params::Vector{P}; kargs...) where {G
         magneticMoments[:,:,m] .= y
         GC.gc()
       end
-      next!(prog)
+      #next!(prog)
     end
   #finally
     BLAS.set_num_threads(numThreadsBLAS)
   #end
 
-  return magneticMoments
+  return Array(magneticMoments)
 end
 
 
@@ -51,7 +51,7 @@ function simulationMNPMultiParams(B::Array{T,3}, t; kargs...) where {T}
 
   M = size(B,3)
 
-  BFunc = (t, param) -> ( [param[1](t), param[2](t), param[3](t)] )
+  BFunc = (t, param) -> ( SVector{3,T}(param[1](t), param[2](t), param[3](t)) )
 
   function fieldInterpolator(field, t)
     function help_(field, t, d)
