@@ -276,6 +276,7 @@ function applyToArbitrarySignal(neuralNetwork::NeuralNetwork, X, device=cpu)
 
   weights = zeros(Float32, N)
   output = zeros(Float32, N, 3)
+  ranges = UnitRange{Int64}[]
   currStart = 1
   while true
     if currStart+snippetLength-1 <= N
@@ -285,18 +286,25 @@ function applyToArbitrarySignal(neuralNetwork::NeuralNetwork, X, device=cpu)
       r = (N-snippetLength+1):N
       stop = true
     end
-    xc = Float32.(X[r,:,1:1]) |> device
-    xc = trafo(xc, nX)
-    yc = back(model(xc), nY) |> cpu
-    output[r,:] .+= yc[:,:,1].*win |> cpu
-    weights[r] += win
-    currStart += stepSize
-
+    push!(ranges, r)
     if stop
       break
     end
+    currStart += stepSize
   end
 
+  input = zeros(Float32, snippetLength, size(X,2), length(ranges)) 
+  for (i,r) in enumerate(ranges)
+    input[:,:,i] = trafo(Float32.(X[r,:,1:1]), neuralNetwork.normalizationX)
+  end
+
+  out = back(model(input), nY) |> cpu
+
+  for (i,r) in enumerate(ranges)
+    output[r,:] .+= out[:,:,i].*win 
+    weights[r] += win
+  end  
+  
   return output ./ weights
 end
 

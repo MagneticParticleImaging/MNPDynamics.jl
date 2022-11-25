@@ -19,7 +19,8 @@ function smTest(params, maxField, samplingRate, anisotropyAxis=nothing)
   
   fx = 2.5e6 / 102
   fy = 2.5e6 / 96
-  BSM = (t, offset) -> (maxField*[sin(2*pi*fx*t), sin(2*pi*fy*t), 0] .+ offset )
+  BSM = (t, offset) -> SVector{3,Float32}(maxField*sin(2*pi*fx*t)+offset[1], 
+                                          maxField*sin(2*pi*fy*t)+offset[2], offset[3])
   
   nOffsets = (30, 30, 1)
     
