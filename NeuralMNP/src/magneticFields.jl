@@ -1,14 +1,19 @@
 
 export generateStructuredFields
-function generateStructuredFields(params, t, Z; fieldType::FieldType, maxField, filterFactor=7)
+function generateStructuredFields(params, t; fieldType::FieldType)
+
+  filterFactor = get(params, :filterFactor, (4,20))
+  maxField = params[:maxField]
+  Z = params[:numData]
 
   if fieldType == RANDOM_FIELD
     B = rand_interval(-1, 1, length(t), 3, Z)
     for z=1:Z
       for d=1:3
-        B[:,d,z] = imfilter(B[:,d,z], Kernel.gaussian((filterFactor,))) 
+        filtFactor = rand_interval(filterFactor[1], filterFactor[2])
+        B[:,d,z] = imfilter(B[:,d,z], Kernel.gaussian((filtFactor,))) 
         B[:,d,z] ./= maximum(abs.(B[:,d,z]))
-        B[:,d,z] .= maxField*(rand()*B[:,d,z] .+ 0.5*rand_interval(-1,1)*ones(Float32,length(t)))
+        B[:,d,z] .= maxField*(rand()*B[:,d,z])
       end
     end
   elseif fieldType == HARMONIC_RANDOM_FIELD

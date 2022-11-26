@@ -162,11 +162,12 @@ end
 
 
 export prepareTrainData
-function prepareTrainData(params, t, B; useTime = true)
+function prepareTrainData(params, t, B)
 
   Z = size(B, 3)
   useDCore = false
   useKAnis = false
+  useTime = params[:trainTimeParam]
 
   if haskey(params, :DCore) && typeof(params[:DCore]) <: AbstractArray
     useDCore = true
@@ -210,16 +211,17 @@ function prepareTrainData(params, t, B; useTime = true)
   return X
 end
 
-function prepareTrainData(params, t, B, m; useTime = true)
-  X = prepareTrainData(params, t, B; useTime)
+function prepareTrainData(params, t, B, m)
+  X = prepareTrainData(params, t, B)
   Y = Float32.(m)
   return X, Y
 end
 
-function prepareTestData(paramsTrain, paramsTest, t, B; useTime = true)
+function prepareTestData(paramsTrain, paramsTest, t, B)
 
   useDCore = false
   useKAnis = false
+  useTime = paramsTrain[:trainTimeParam]
 
   if haskey(paramsTrain, :DCore) && typeof(paramsTrain[:DCore]) <: Tuple
     useDCore = true
@@ -258,11 +260,9 @@ end
 
 
 
-
-
 hannWindow(M) = (1.0 .- cos.(2*π/(M-1)*(0:(M-1))))/(M-1)*M .+ 0.001
 
-function applyToArbitrarySignal(neuralNetwork::NeuralNetwork, X, device=cpu)
+function applyToArbitrarySignal(neuralNetwork::NeuralNetwork, X; device=cpu, kargs...)
   snippetLength = neuralNetwork.timeLength
   N = size(X,1)
   stepSize = snippetLength ÷ 2
@@ -319,8 +319,9 @@ function MNPDynamics.simulationMNP(B::g, t, ::NeuralNetworkMNPAlg;
     BTime[l,:] .= B(t[l])
   end
 
-  X = prepareTestData(neuralNetwork.params, Dict(kargs), t, BTime; useTime = true)
-  m = applyToArbitrarySignal(neuralNetwork, X)
+  X = prepareTestData(neuralNetwork.params, Dict(kargs), t, BTime)
+
+  m = applyToArbitrarySignal(neuralNetwork, X; kargs...)
 
   ε = (t[2]-t[1]) / 4
 
@@ -329,8 +330,8 @@ function MNPDynamics.simulationMNP(B::g, t, ::NeuralNetworkMNPAlg;
       BTime[l,:] .= B(t[l]+ε)
     end
   
-    X = prepareTestData(neuralNetwork.params, Dict(kargs), t, BTime; useTime = true)
-    m2 = applyToArbitrarySignal(neuralNetwork, X)
+    X = prepareTestData(neuralNetwork.params, Dict(kargs), t, BTime)
+    m2 = applyToArbitrarySignal(neuralNetwork, X; kargs...)
     return (m2.-m) ./ ε 
   else
     return m

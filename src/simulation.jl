@@ -98,7 +98,8 @@ function simulationMNP(B::g, tVec, ::FokkerPlanckAlg;
                        reltol = 1e-3, 
                        abstol=1e-6,
                        derivative = false,
-                       derivative_order=50 # order of finite differentiation method
+                       derivative_order=50, # order of finite differentiation method
+                       kargs...
                        ) where g
     
   if relaxation == NO_RELAXATION

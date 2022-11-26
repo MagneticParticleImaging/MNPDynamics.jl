@@ -8,26 +8,13 @@ using Serialization
 
 include("params.jl")
 
-BTrain_ = rand(range(-1,1,length=1000),snippetLength,3,Z)
-for z=1:Z
-  for l=1:3
-    filtFactor = rand(range(4,20,length=40))
-    BTrain_[:,l,z] = imfilter(BTrain_[:,l,z],Kernel.gaussian((filtFactor,))) 
-    BTrain_[:,l,z] ./= maximum(abs.(BTrain_[:,l,z]))
-    BTrain_[:,l,z] .= maxField*(rand()*BTrain_[:,l,z]) # .+ 
-                                #0.5*rand(range(-1,1,length=1000))*ones(Float32,snippetLength))
-  end
-end
+filenameTrain = "trainData.h5"
 
-anisotropyAxis = vec([ rand()*NeuralMNP.randAxis() for z=1:Z ]) 
-p[:kAnis] =  kAnis*anisotropyAxis
+BTrain, pTrain = generateStructuredFields(p, tSnippet; fieldType=RANDOM_FIELD)
+                     
+@time mTrain, BTrain = simulationMNPMultiParams(filenameTrain, BTrain, tSnippet, pTrain)
 
-filenameTrain = "trainData3.h5"
-@time mTrain, BTrain = simulationMNPMultiParams(filenameTrain, BTrain_, tSnippet, p)
-
-######
-
-X, Y = prepareTrainData(p, tSnippet, BTrain, mTrain; useTime = false)
+X, Y = prepareTrainData(pTrain, tSnippet, BTrain, mTrain)
 
 inputChan = size(X,2)
 outputChan = size(Y,2)
@@ -40,19 +27,18 @@ Y .= NeuralMNP.trafo(Y, nY)
 
 bs = 20# 4
 
-trainLoader = DataLoader((X[:,:,1:ZTrain],Y[:,:,1:ZTrain]), batchsize=bs, shuffle=true)
-testLoader = DataLoader((X[:,:,(ZTrain+1):end],Y[:,:,(ZTrain+1):end]), batchsize=bs, shuffle=false)
+trainLoader = DataLoader((X[:,:,1:p[:numTrainingData]],Y[:,:,1:p[:numTrainingData]]), batchsize=bs, shuffle=true)
+testLoader = DataLoader((X[:,:,(p[:numTrainingData]+1):end],Y[:,:,(p[:numTrainingData]+1):end]), batchsize=bs, shuffle=false)
 
 modes = 12 #24
 width = 32
 
 model = NeuralMNP.make_neural_operator_model(inputChan, outputChan, modes, width, NeuralMNP.NeuralOperators.FourierTransform)
 
-
 ηs = [1f-3,1f-4,1f-5]
 γ = 0.5
 stepSize = 30
-epochs = 100
+epochs = 30
 
 #opt = Flux.Optimiser(ExpDecay(η, γ, stepSize, 1f-5), Adam())
 @time for η in ηs
@@ -60,7 +46,7 @@ epochs = 100
   global model = NeuralMNP.train(model, opt, trainLoader, testLoader, nY; epochs, device, plotStep=1)
 end
 
-NOModel = NeuralMNP.NeuralNetwork(model, nX, nY, Dict{Symbol,Any}(), snippetLength)
+NOModel = NeuralMNP.NeuralNetwork(model, nX, nY, p, p[:snippetLength])
 
 filenameModel = "model.bin"
 serialize(filenameModel, NOModel);
