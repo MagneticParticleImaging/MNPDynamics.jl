@@ -5,12 +5,13 @@ using FFTW, HDF5
 using Serialization
 using Flux
 using Statistics
+using StaticArrays
 
 include("params.jl")
 include("../visualization.jl")
 
 
-function smTest(params, maxField, samplingRate, anisotropyAxis=nothing)
+function smTest(params, maxField, samplingRate, anisotropyAxis=nothing; device=cpu)
 
   tLengthSM = lcm(96,102);             # length of time vector
   tMaxSM = lcm(96,102) / samplingRate; # maximum evaluation time in seconds
@@ -52,7 +53,7 @@ function smTest(params, maxField, samplingRate, anisotropyAxis=nothing)
       XLongTest = cat( Bx, By, Bz, n_[1]*ones(Float32, tLengthSM), n_[2]*ones(Float32, tLengthSM),
                       n_[3]*ones(Float32, tLengthSM), dims=2)
 
-      q = NeuralMNP.applyToArbitrarySignal(params[:neuralNetwork], XLongTest)
+      q = NeuralMNP.applyToArbitrarySignal(params[:neuralNetwork], XLongTest, device)
       sm[:,:,z] .= q
     end
     return sm

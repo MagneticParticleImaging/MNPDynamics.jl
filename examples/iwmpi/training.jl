@@ -1,10 +1,9 @@
 using MNPDynamics
 using NeuralMNP
 using LinearAlgebra
-using StatsBase, Statistics, MLUtils, Flux
+using Statistics, MLUtils, Flux
 using Random
 using Images
-using Interpolations
 using Serialization
 
 include("params.jl")
@@ -23,7 +22,7 @@ end
 anisotropyAxis = vec([ rand()*NeuralMNP.randAxis() for z=1:Z ]) 
 p[:kAnis] =  kAnis*anisotropyAxis
 
-filenameTrain = "trainData.h5"
+filenameTrain = "trainData3.h5"
 @time mTrain, BTrain = simulationMNPMultiParams(filenameTrain, BTrain_, tSnippet, p)
 
 ######
@@ -56,9 +55,9 @@ stepSize = 30
 epochs = 100
 
 #opt = Flux.Optimiser(ExpDecay(η, γ, stepSize, 1f-5), Adam())
-for η in ηs
+@time for η in ηs
   global opt = Adam(η)
-  global model = NeuralMNP.train(model, opt, trainLoader, testLoader, nY; epochs, device)
+  global model = NeuralMNP.train(model, opt, trainLoader, testLoader, nY; epochs, device, plotStep=1)
 end
 
 NOModel = NeuralMNP.NeuralNetwork(model, nX, nY, Dict{Symbol,Any}(), snippetLength)

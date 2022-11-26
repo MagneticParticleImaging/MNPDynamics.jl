@@ -298,7 +298,7 @@ function applyToArbitrarySignal(neuralNetwork::NeuralNetwork, X, device=cpu)
     input[:,:,i] = trafo(Float32.(X[r,:,1:1]), neuralNetwork.normalizationX)
   end
 
-  out = back(model(input), nY) |> cpu
+  out = back(model(input |> device), nY) |> cpu
 
   for (i,r) in enumerate(ranges)
     output[r,:] .+= out[:,:,i].*win 

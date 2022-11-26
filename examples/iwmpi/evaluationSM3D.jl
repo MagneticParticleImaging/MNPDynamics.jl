@@ -8,7 +8,7 @@ include("params.jl")
 include("../visualization.jl")
 
 
-function smTest(params, maxField, samplingRate, anisotropyAxis=nothing)
+function smTest(params, maxField, samplingRate, anisotropyAxis=nothing; device=cpu)
 
   tLengthSM = lcm(96,99,102);             # length of time vector
   tMaxSM = lcm(96,99,102) / samplingRate; # maximum evaluation time in seconds
@@ -19,6 +19,9 @@ function smTest(params, maxField, samplingRate, anisotropyAxis=nothing)
   fy = 2.5e6 / 96
   fz = 2.5e6 / 99
   BSM = (t, offset) -> (maxField*[sin(2*pi*fx*t), sin(2*pi*fy*t), sin(2*pi*fz*t)] .+ offset )
+  BSM = (t, offset) -> SVector{3,Float32}(maxField*sin(2*pi*fx*t)+offset[1], 
+                                          maxField*sin(2*pi*fy*t)+offset[2], 
+                                          maxField*sin(2*pi*fz*t)+offset[3])
   
   nOffsets = (30, 30, 30)
     
@@ -51,7 +54,7 @@ function smTest(params, maxField, samplingRate, anisotropyAxis=nothing)
       XLongTest = cat( Bx, By, Bz, n_[1]*ones(Float32, tLengthSM), n_[2]*ones(Float32, tLengthSM),
                       n_[3]*ones(Float32, tLengthSM), dims=2)
 
-      q = NeuralMNP.applyToArbitrarySignal(params[:neuralNetwork], XLongTest)
+      q = NeuralMNP.applyToArbitrarySignal(params[:neuralNetwork], XLongTest, device)
       sm[:,:,z] .= q
     end
     return sm
