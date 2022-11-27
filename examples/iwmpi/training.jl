@@ -10,7 +10,7 @@ include("params.jl")
 
 filenameTrain = "trainData.h5"
 
-BTrain, pTrain = generateStructuredFields(p, tSnippet; fieldType=RANDOM_FIELD)
+BTrain, pTrain = generateStructuredFields(p, tSnippet, p[:numData]; fieldType=RANDOM_FIELD)
                      
 @time mTrain, BTrain = simulationMNPMultiParams(filenameTrain, BTrain, tSnippet, pTrain)
 

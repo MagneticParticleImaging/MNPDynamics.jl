@@ -18,13 +18,13 @@ function plotExampleSignals(model, kAnis=1100, offset=[0,0,0])
   p[:abstol] = 1e-6         # absolute tolerance
   p[:tWarmup] = 0.00005     # warmup time
   p[:derivative] = true   
-
+  
   amplitude = 0.012
   fx = 25000;
-  tLength = 200;       # length of time vector
-  tMax = 2/fx;          # maximum evaluation time in seconds
+  tMax = 2/fx; 
+  tLength = round(Int, tMax*model.params[:samplingRate]);  
 
-  t = range(0,stop=tMax,length=tLength);
+  t = range(0,step=1/model.params[:samplingRate],length=tLength);
 
   DCore = collect(18:2:24)
 
@@ -34,7 +34,7 @@ function plotExampleSignals(model, kAnis=1100, offset=[0,0,0])
     p[:DCore] = DCore[d]*1e-9         # particle diameter in nm
 
     # Magnetic field for simulation 
-    B =  t -> (amplitude*[-cos(2*pi*fx*t); 0*t; 0*t] .+ offset);
+    B = t -> (amplitude*[-cos(2*pi*fx*t); 0*t; 0*t] .+ offset);
 
     @time y = simulationMNP(B, t; p...)
     pNO = copy(p)
@@ -46,7 +46,7 @@ function plotExampleSignals(model, kAnis=1100, offset=[0,0,0])
     plot!(pl1, t[:], yNO[:,1], lw=2, ls=:dot, c=d, label="D=$(DCore[d]) nm predict")
   end
 
-  kAnis = collect([0, 1000, 2000, 7000])
+  kAnis = collect([0, 500, 1200, 1550])
 
   pl2 = plot()
   p[:DCore] = 20.0e-9         # particle diameter in nm
@@ -69,7 +69,7 @@ function plotExampleSignals(model, kAnis=1100, offset=[0,0,0])
 
   pl3 = plot()
   p[:DCore] = 20e-9         # particle diameter in nm
-  p[:kAnis] = 0*1000*[1;0;0]
+  p[:kAnis] = 1000*[1;0;0]
   off = collect([-12, -6, 6, 12])
 
   for k=1:length(off)

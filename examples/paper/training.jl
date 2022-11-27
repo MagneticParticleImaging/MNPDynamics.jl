@@ -1,21 +1,25 @@
-@time using MNPDynamics
-using Plots, Measures
-using FFTW
-using Flux, MLUtils
-using BSON
+using MNPDynamics
+using NeuralMNP
+using LinearAlgebra
+using Statistics, MLUtils, Flux
+using Random
+using Images
+using Serialization
 
 include("params.jl")
 
 filenameTrain = "trainData.h5"
 
-#BTrain, pTrain = generateStructuredFields(p, tSnippet, Z; maxField=maxField, 
-#                     fieldType=RANDOM_FIELD, filterFactor=20)
-BTrain, pTrain = generateStructuredFields(p, tSnippet, Z; maxField=maxField, 
-                     fieldType=HARMONIC_RANDOM_FIELD, filterFactor=20)
-                     
-mTrain, BTrain = simulationMNPMultiParams(filenameTrain, BTrain, tSnippet, pTrain)
+BTrain1, pTrain1 = generateStructuredFields(p, tSnippet, p[:numData] ÷ 2; fieldType=RANDOM_FIELD)
+BTrain2, pTrain2 = generateStructuredFields(p, tSnippet, p[:numData] ÷ 2; fieldType=HARMONIC_RANDOM_FIELD,
+                                            anisotropyAxis = [1,0,0], dims=1, 
+                                            freqInterval = (24.999999e3, 25.00001e3))
 
-X, Y = prepareTrainData(pTrain, tSnippet, BTrain, mTrain; useTime = true)
+BTrain, pTrain = combineFields((BTrain1, BTrain2), (pTrain1, pTrain2); shuffle=true)
+                     
+@time mTrain, BTrain = simulationMNPMultiParams(filenameTrain, BTrain, tSnippet, pTrain)
+
+X, Y = prepareTrainData(pTrain, tSnippet, BTrain, mTrain)
 
 inputChan = size(X,2)
 outputChan = size(Y,2)
@@ -23,45 +27,31 @@ outputChan = size(Y,2)
 nX = normalizeData(X; dims=(1,3))
 nY = normalizeData(Y; dims=(1,3))
 
-X .= trafo(X, nX)
-Y .= trafo(Y, nY)
-
+X .= NeuralMNP.trafo(X, nX)
+Y .= NeuralMNP.trafo(Y, nY)
 
 bs = 20# 4
 
+trainLoader = DataLoader((X[:,:,1:p[:numTrainingData]],Y[:,:,1:p[:numTrainingData]]), batchsize=bs, shuffle=true)
+testLoader = DataLoader((X[:,:,(p[:numTrainingData]+1):end],Y[:,:,(p[:numTrainingData]+1):end]), batchsize=bs, shuffle=false)
 
-trainLoader = DataLoader((X[:,:,1:ZTrain],Y[:,:,1:ZTrain]), batchsize=bs, shuffle=true)
-testLoader = DataLoader((X[:,:,(ZTrain+1):end],Y[:,:,(ZTrain+1):end]), batchsize=bs, shuffle=false)
-
-modes = 8 #24
+modes = 16#12 #24
 width = 32
-model = make_neural_operator_model(inputChan, outputChan, modes, width, MNPDynamics.NeuralOperators.FourierTransform)
 
-η = 1f-2
+model = NeuralMNP.make_neural_operator_model(inputChan, outputChan, modes, width, NeuralMNP.NeuralOperators.FourierTransform)
+
+ηs = [1f-3,1f-4]#,1f-5]
 γ = 0.5
-stepSize = 100
-#opt = Flux.Optimiser(ExpDecay(η, γ, stepSize, 1f-6), Adam())
-opt = Adam(η)
+stepSize = 30
+epochs = 100
 
-NeuralMNP.train(model, opt, trainLoader, testLoader, nY; epochs=30)
+#opt = Flux.Optimiser(ExpDecay(η, γ, stepSize, 1f-5), Adam())
+@time for η in ηs
+  global opt = Adam(η)
+  global model = NeuralMNP.train(model, opt, trainLoader, testLoader, nY; epochs, device, plotStep=1)
+end
 
-NOModel = NeuralNetwork(model, nX, nY, p, snippetLength)
+NOModel = NeuralMNP.NeuralNetwork(model, nX, nY, p, p[:snippetLength])
 
-filenameModel = "model.bson"
-bson(filenameModel, model = NOModel);
-
-
-#=
-filenameTest = "testData.h5"
-BTest, pTest = generateStructuredFields(p, tSnippet, ZTest; maxField=maxField, fieldType=HARMONIC_RANDOM_FIELD)
-mTest, BTest = simulationMNPMultiParams(filenameTest, BTest, tSnippet, pTest)
-XTest, YTest = prepareTrainData(pTest, tSnippet, BTest, mTest; useTime = true)
-XTest .= trafo(XTest, nX)
-YTest .= trafo(YTest, nY)
-testLoader2 = DataLoader((XTest, YTest), batchsize=bs, shuffle=true)
-
-MNPDynamics.train(model, opt, trainLoader, testLoader2, nY; epochs=3)
-=#
-
-
-
+filenameModel = "model.bin"
+serialize(filenameModel, NOModel);

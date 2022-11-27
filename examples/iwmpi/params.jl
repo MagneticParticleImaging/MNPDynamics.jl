@@ -14,7 +14,7 @@ p[:derivative] = false
 p[:solver] = :FBDF         # Use more stable solver
 p[:trainTimeParam] = false
 
-p[:numData] = 1000
+p[:numData] = 5000
 p[:numTrainingData] = round(Int, p[:numData]*0.9)
 p[:numTestData] = p[:numData] - p[:numTrainingData]
 p[:snippetLength] = 200
