@@ -21,6 +21,23 @@ function make_neural_operator_model(inputChan, outputChan, modes, width, transfo
   )
 end
 
+function make_unet_neural_operator_model(inputChan, outputChan, modes, width, transform=FourierTransform;
+                                    permuted=true)
+  return Chain(
+    # lift (d + 1)-dimensional vector field to n-dimensional vector field
+    # here, d == 1 and n == 64
+    permuted ? Conv((1,), inputChan=>width) : Dense(inputChan, width),
+    # map each hidden representation to the next by integral kernel operator
+    OperatorKernel(width=>width, (modes, ), transform, gelu, permuted=permuted),
+    OperatorKernel(width=>width, (modes, ), transform, gelu, permuted=permuted),
+    OperatorUNOKernel(width=>width, (modes, ), transform, gelu, permuted=permuted),
+    OperatorUNOKernel(width=>width, (modes, ), transform, permuted=permuted),
+    # project back to the scalar field of interest space
+    permuted ? Conv((1,), width=>128, gelu) : Dense(width, 128, gelu),
+    permuted ? Conv((1,), 128=>outputChan) : Dense(128, outputChan),
+  )
+end
+
 ### normalization function ###
 
 struct NormalizationParams{U}

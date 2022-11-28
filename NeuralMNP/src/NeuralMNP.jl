@@ -8,6 +8,7 @@ using Flux: withgradient
 using StatsBase #, Statistics
 using Random
 using ProgressMeter
+using Distributions
 
 using Plots
 
@@ -27,6 +28,7 @@ end
 export RANDOM_FIELD, HARMONIC_RANDOM_FIELD, HARMONIC_MPI_FIELD
 
 include("magneticFields.jl")
+include("UNet.jl")
 include("neuralOperator.jl")
 
 end
