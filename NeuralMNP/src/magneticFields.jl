@@ -18,6 +18,18 @@ function generateStructuredFields(params, t, Z; fieldType::FieldType,
         B[:,d,z] .= maxField*(rand()*B[:,d,z])
       end
     end
+  elseif fieldType == LOWPASS_RANDOM_FIELD
+    B = rand_interval(-1, 1, length(t), 3, Z)
+    samplingRate = 1/(t[2]-t[1])
+    for z=1:Z
+      for d in dims
+        f_thresh = rand_interval(freqInterval[1], freqInterval[2])
+        filter = lowPassFilter(length(t), samplingRate, f_thresh)
+        B[:,d,z] = real.( filterSignal(B[:,d,z], filter) )
+        B[:,d,z] ./= maximum(abs.(B[:,d,z]))
+        B[:,d,z] .= maxField*(rand()*B[:,d,z])
+      end
+    end
   elseif fieldType == HARMONIC_RANDOM_FIELD
     B = zeros(Float32, length(t), 3, Z)
     for z=1:Z
@@ -84,3 +96,20 @@ function combineFields(fields, params; shuffle=true)
   B, param
 end
 
+# low pass filter
+function lowPassFilter(N, f_samp, f_thresh)
+  # indices of low frequencies
+  centerIdx = N÷2 + 1
+  x0 = Int64( centerIdx-(N*f_thresh)÷f_samp )
+  x1 = Int64( centerIdx+(N*f_thresh)÷f_samp )
+  #filter
+  filt = zeros(Int64, N)
+  filt[x0:x1] .= 1
+
+  return filt
+end
+
+# apply frequency filter to signal
+function filterSignal(x, filt)
+  return ifft( ifftshift(filt) .* fft( x, 1) )
+end

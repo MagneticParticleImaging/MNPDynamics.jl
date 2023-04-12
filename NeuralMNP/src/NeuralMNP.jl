@@ -9,6 +9,7 @@ using StatsBase #, Statistics
 using Random
 using ProgressMeter
 using Distributions
+using FFTW
 
 using Plots
 
@@ -21,11 +22,12 @@ export NeuralNetworkMNP
 
 @enum FieldType begin
   RANDOM_FIELD
+  LOWPASS_RANDOM_FIELD
   HARMONIC_RANDOM_FIELD
   HARMONIC_MPI_FIELD
 end
 
-export RANDOM_FIELD, HARMONIC_RANDOM_FIELD, HARMONIC_MPI_FIELD
+export RANDOM_FIELD, LOWPASS_RANDOM_FIELD, HARMONIC_RANDOM_FIELD, HARMONIC_MPI_FIELD
 
 include("magneticFields.jl")
 include("UNet.jl")
