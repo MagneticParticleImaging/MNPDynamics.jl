@@ -36,8 +36,13 @@ function simulationMNPMultiParams(B::G, t, params::Vector{P}; kargs...) where {G
 
     magneticMoments = SharedArray{Float64}(length(t), 3, M)
     kargsInner = copy(kargs)
-    delete!(kargsInner, :DCore)
-    delete!(kargsInner, :kAnis)
+    if haskey(kargs, :DCore) && typeof(kargs[:DCore]) <: AbstractArray
+      delete!(kargsInner, :DCore)
+    end
+    if haskey(kargs, :kAnis) && typeof(kargs[:kAnis]) <: AbstractVector &&
+                      ( eltype(kargs[:kAnis]) <: AbstractVector ||     eltype(kargs[:kAnis]) <: Tuple )
+      delete!(kargsInner, :kAnis)
+    end
 
     #prog = Progress(M, 1, "Simulation")
     #try
