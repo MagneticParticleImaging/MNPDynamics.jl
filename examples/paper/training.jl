@@ -46,8 +46,8 @@ stepSize = 30
 epochs = 30
 
 @time for η in ηs
-  global opt_state = Flux.setup(Adam(η), model)
-  global model = NeuralMNP.train(model, opt_state, trainLoader, testLoader, nY; epochs, device, plotStep=1)
+  global opt = Adam(η)
+  global model = NeuralMNP.train(model, opt, trainLoader, testLoader, nY; epochs, device, plotStep=1)
 end
 
 NOModel = NeuralMNP.NeuralNetwork(model, nX, nY, p, p[:snippetLength])

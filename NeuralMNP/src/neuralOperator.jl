@@ -107,11 +107,12 @@ end
 
 ### training function ###
 
-function train(model, opt_state, trainLoader, testLoader, normalization::NormalizationParams; 
+function train(model, opt, trainLoader, testLoader, normalization::NormalizationParams; 
                epochs::Integer=10, plotStep=1, plotting=false, device=cpu)
 
   model = model |> device
   normalization = normalization |> device
+  opt_state = Flux.setup(opt, model)
                
   trainLoss = Float32(0.0)
 
