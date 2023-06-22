@@ -107,15 +107,13 @@ end
 
 ### training function ###
 
-function train(model, opt, trainLoader, testLoader, normalization::NormalizationParams; 
+function train(model, opt_state, trainLoader, testLoader, normalization::NormalizationParams; 
                epochs::Integer=10, plotStep=1, plotting=false, device=cpu)
 
   model = model |> device
   normalization = normalization |> device
                
   trainLoss = Float32(0.0)
-
-  ps = Flux.params(model)	
 
 	for epoch in 1:epochs
 
@@ -124,11 +122,12 @@ function train(model, opt, trainLoader, testLoader, normalization::Normalization
       # @showprogress "Epoch $epoch" for (x,y) in trainLoader
       for (x,y) in trainLoader
 
-        loss_, gs = Flux.withgradient(ps) do
-          loss(model, x |> device, y |> device, normalization)
+        loss_, gs = Flux.withgradient(model) do m
+          loss(m, x |> device, y |> device, normalization)
         end
         trainLoss += loss_
-        Flux.Optimise.update!(opt, ps, gs)
+        Flux.Optimise.update!(opt_state, model, gs[1])
+
       end
     end
 		trainLoss /= length(trainLoader)

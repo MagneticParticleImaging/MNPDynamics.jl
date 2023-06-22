@@ -3,7 +3,6 @@ using NeuralMNP
 using LinearAlgebra
 using Statistics, MLUtils, Flux
 using Random
-using Images
 using Serialization
 
 include("params.jl")
@@ -38,21 +37,20 @@ testLoader = DataLoader((X[:,:,(p[:numTrainingData]+1):end],Y[:,:,(p[:numTrainin
 modes = 12#12 #24
 width = 32
 
-#model = NeuralMNP.make_neural_operator_model(inputChan, outputChan, modes, width, NeuralMNP.NeuralOperators.FourierTransform)
-model = NeuralMNP.make_unet_neural_operator_model(inputChan, outputChan, modes, width, NeuralMNP.NeuralOperators.FourierTransform)
+model = NeuralMNP.make_neural_operator_model(inputChan, outputChan, modes, width, NeuralMNP.NeuralOperators.FourierTransform)
+#model = NeuralMNP.make_unet_neural_operator_model(inputChan, outputChan, modes, width, NeuralMNP.NeuralOperators.FourierTransform)
 
 ηs = [1f-3,1f-4]#,1f-5]
 γ = 0.5
 stepSize = 30
-epochs = 100
+epochs = 30
 
-#opt = Flux.Optimiser(ExpDecay(η, γ, stepSize, 1f-5), Adam())
 @time for η in ηs
-  global opt = Adam(η)
-  global model = NeuralMNP.train(model, opt, trainLoader, testLoader, nY; epochs, device, plotStep=1)
+  global opt_state = Flux.setup(Adam(η), model)
+  global model = NeuralMNP.train(model, opt_state, trainLoader, testLoader, nY; epochs, device, plotStep=1)
 end
 
 NOModel = NeuralMNP.NeuralNetwork(model, nX, nY, p, p[:snippetLength])
 
-filenameModel = "model.bin"
+filenameModel = "modelNew.bin"
 serialize(filenameModel, NOModel);
