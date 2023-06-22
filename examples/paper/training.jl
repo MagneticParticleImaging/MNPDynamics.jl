@@ -40,7 +40,7 @@ width = 32
 model = NeuralMNP.make_neural_operator_model(inputChan, outputChan, modes, width, NeuralMNP.NeuralOperators.FourierTransform)
 #model = NeuralMNP.make_unet_neural_operator_model(inputChan, outputChan, modes, width, NeuralMNP.NeuralOperators.FourierTransform)
 
-ηs = [1f-3,1f-4]#,1f-5]
+#=ηs = [1f-3,1f-4]#,1f-5]
 γ = 0.5
 stepSize = 30
 epochs = 30
@@ -48,7 +48,15 @@ epochs = 30
 @time for η in ηs
   global opt = Adam(η)
   global model = NeuralMNP.train(model, opt, trainLoader, testLoader, nY; epochs, device, plotStep=1)
-end
+end =#
+
+η = 1f-3
+γ = 1f-1 #1f-1
+stepSize = 30 #* p[:numTrainingData] / bs
+epochs = 60
+
+opt = Adam(η)
+model = NeuralMNP.train(model, opt, trainLoader, testLoader, nY; epochs, device, γ, stepSize, plotStep=1)
 
 NOModel = NeuralMNP.NeuralNetwork(model, nX, nY, p, p[:snippetLength])
 

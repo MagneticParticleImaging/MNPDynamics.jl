@@ -108,7 +108,7 @@ end
 ### training function ###
 
 function train(model, opt, trainLoader, testLoader, normalization::NormalizationParams; 
-               epochs::Integer=10, plotStep=1, plotting=false, device=cpu)
+               epochs::Integer=10, γ::Float32=0f0, stepSize::Integer=0, plotStep=1, plotting=false, device=cpu)
 
   model = model |> device
   normalization = normalization |> device
@@ -116,12 +116,14 @@ function train(model, opt, trainLoader, testLoader, normalization::Normalization
                
   trainLoss = Float32(0.0)
 
+  ηCurrent = opt.eta
+
 	for epoch in 1:epochs
 
 		trainLoss = Float32(0.0)
     t_ = @elapsed begin
-      # @showprogress "Epoch $epoch" for (x,y) in trainLoader
-      for (x,y) in trainLoader
+    # @showprogress "Epoch $epoch" for (x,y) in trainLoader
+    for (x,y) in trainLoader
 
         loss_, gs = Flux.withgradient(model) do m
           loss(m, x |> device, y |> device, normalization)
@@ -149,6 +151,12 @@ function train(model, opt, trainLoader, testLoader, normalization::Normalization
       p1 = plot(test_y_true[:,1,1], label="true"); plot!(p1,test_y_pred[:,1,1], label="predict", title="test")
       p2 = plot(train_y_true[:,1,1],label="true"); plot!(p2,train_y_pred[:,1,1], label="predict", title="train")
       display(plot(p1, p2, layout=(2,1)))
+    end
+
+    # adjust learning range
+    if stepSize > 0 && epoch%stepSize==0
+      ηCurrent *= γ
+      Flux.Optimisers.adjust!(opt_state, ηCurrent)
     end
 	end
   return model |> cpu
