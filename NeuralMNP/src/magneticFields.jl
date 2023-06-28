@@ -3,7 +3,8 @@ export generateStructuredFields
 function generateStructuredFields(params, t, Z; fieldType::FieldType, 
                                              anisotropyAxis=nothing,
                                              dims = 1:3,
-                                             freqInterval = (20e3, 50e3))
+                                             freqInterval = (20e3, 50e3),
+                                             distribution = :uniform)
 
   filterFactor = get(params, :filterFactor, (4,20))
   maxField = params[:maxField]
@@ -22,12 +23,16 @@ function generateStructuredFields(params, t, Z; fieldType::FieldType,
     B = rand_interval(-1, 1, length(t), 3, Z)
     samplingRate = 1/(t[2]-t[1])
     for z=1:Z
-      for d in dims
-        f_thresh = rand_interval(freqInterval[1], freqInterval[2])
-        filter = lowPassFilter(length(t), samplingRate, f_thresh)
-        B[:,d,z] = real.( filterSignal(B[:,d,z], filter) )
-        B[:,d,z] ./= maximum(abs.(B[:,d,z]))
-        B[:,d,z] .= maxField*(rand()*B[:,d,z])
+      for d=1:3
+        if d ∈ dims
+          f_thresh = rand_interval(freqInterval[1], freqInterval[2])
+          filter = lowPassFilter(length(t), samplingRate, f_thresh)
+          B[:,d,z] = real.( filterSignal(B[:,d,z], filter) )
+          B[:,d,z] ./= maximum(abs.(B[:,d,z]))
+          B[:,d,z] .= maxField*(rand()*B[:,d,z])
+        else
+          B[:,d,z] .= 0
+        end
       end
     end
   elseif fieldType == HARMONIC_RANDOM_FIELD
@@ -56,14 +61,14 @@ function generateStructuredFields(params, t, Z; fieldType::FieldType,
   paramsInner = copy(params)
 
   if haskey(params, :DCore) && typeof(params[:DCore]) <: Tuple
-    paramsInner[:DCore] = rand_interval(params[:DCore][1], params[:DCore][2], Z) 
+    paramsInner[:DCore] = rand_interval(params[:DCore][1], params[:DCore][2], Z; distribution) 
   end
 
   if haskey(params, :kAnis) && typeof(params[:kAnis]) <: Tuple
     if anisotropyAxis == nothing
-      paramsInner[:kAnis] = [ rand_interval(params[:kAnis][1], params[:kAnis][2])*randAxis() for z=1:Z ]
+      paramsInner[:kAnis] = [ rand_interval(params[:kAnis][1], params[:kAnis][2]; distribution)*randAxis() for z=1:Z ]
     else
-      paramsInner[:kAnis] = [ rand_interval(params[:kAnis][1], params[:kAnis][2])*anisotropyAxis for z=1:Z ]
+      paramsInner[:kAnis] = [ rand_interval(params[:kAnis][1], params[:kAnis][2]; distribution)*anisotropyAxis for z=1:Z ]
     end
   end
 

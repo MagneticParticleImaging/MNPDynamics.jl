@@ -175,8 +175,15 @@ end
 
 ### data preparation ###
 
-function rand_interval(a, b, num...)
-  return rand(num...) .* (b-a) .+ a
+function rand_interval(a, b, num...; distribution = :uniform)
+  if distribution == :uniform
+    return rand(num...) .* (b-a) .+ a
+  elseif distribution == :chi
+    dist = Distributions.Chi(1)
+    return clamp.((1.0 .- rand(dist, num...)./3 ) .* (b-a) .+ a, a, b)
+  else
+    error("Distribution $(distribution) not implemented yet!")
+  end
 end
 
 function randAxis()
