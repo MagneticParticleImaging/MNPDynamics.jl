@@ -1,11 +1,12 @@
 using MNPDynamics
 using NeuralMNP
-using Plots, Measures
+using Plots, Plots.Measures
 using FFTW, HDF5
 using Serialization
 using Flux
 using Statistics
-@everywhere using StaticArrays
+#@everywhere using StaticArrays
+using StaticArrays
 
 include("../visualization.jl")
 include("utils.jl")
