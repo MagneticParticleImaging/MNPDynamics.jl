@@ -1,3 +1,5 @@
+# Python implementation
+# https://github.com/gegewen/ufno
 
 ### ConvAsymPadding Layer ###
 
