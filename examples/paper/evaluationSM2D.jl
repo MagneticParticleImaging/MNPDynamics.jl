@@ -1,6 +1,6 @@
 using MNPDynamics
 using NeuralMNP
-using Plots, Measures
+using Plots, Plots.Measures
 using FFTW, HDF5
 using Serialization
 using Flux

@@ -7,12 +7,12 @@ filenameModel = "model.bin"
 NOModel = deserialize(filenameModel)
 include("params.jl")
 
-function plotExampleSignals(model, kAnis=0*1100, offset=[0,0,0])
+function plotExampleSignals(model, kAnis=1100, offset=[0,0,0])
   
   p = Dict{Symbol,Any}()
   p[:α] = 0.1               # damping coefficient
   p[:kAnis] = kAnis*[1.0,0.0,0.0] # anisotropy constant and anisotropy axis
-  p[:N] = 20                # maximum spherical harmonics index to be considered
+  p[:N] = 30                # maximum spherical harmonics index to be considered
   p[:relaxation] = NEEL     # relaxation mode
   p[:reltol] = 1e-4         # relative tolerance
   p[:abstol] = 1e-6         # absolute tolerance
@@ -38,6 +38,7 @@ function plotExampleSignals(model, kAnis=0*1100, offset=[0,0,0])
 
     @time y = simulationMNP(B, t; p...)
     pNO = copy(p)
+
     pNO[:neuralNetwork] = model
     pNO[:alg] = NeuralNetworkMNP
     yNO = simulationMNP(B, t; pNO...)
@@ -46,10 +47,11 @@ function plotExampleSignals(model, kAnis=0*1100, offset=[0,0,0])
     plot!(pl1, t[:], yNO[:,1], lw=2, ls=:dot, c=d, label="D=$(DCore[d]) nm predict")
   end
 
-  kAnis = collect([0, 2000, 6000, 9500])
+  #kAnis = collect([0, 2000, 6000, 9500])
+  kAnis = collect([0, 1000, 2000, 4500])
 
   pl2 = plot()
-  p[:DCore] = 20.0e-9         # particle diameter in nm
+  p[:DCore] = 24.0e-9         # particle diameter in nm
   for k=1:length(kAnis)
     p[:kAnis] = kAnis[k]*[1.0;0.0;0] #NeuralMNP.randAxis()  # anisotropy constant and anisotropy axis
 
@@ -68,8 +70,8 @@ function plotExampleSignals(model, kAnis=0*1100, offset=[0,0,0])
 
 
   pl3 = plot()
-  p[:DCore] = 20e-9         # particle diameter in nm
-  p[:kAnis] = 1000*[1;0;0]
+  p[:DCore] = 24e-9         # particle diameter in nm
+  p[:kAnis] = 4000*[1;0;0]
   off = collect([-12, -6, 6, 12])
 
   for k=1:length(off)
@@ -91,4 +93,4 @@ function plotExampleSignals(model, kAnis=0*1100, offset=[0,0,0])
   savefig(p_, "evalMPS.pdf")
   p_
 end
-plotExampleSignals(NOModel, 700, [0.0,0,0])
+plotExampleSignals(NOModel, 4500, [0.0,0,0])
