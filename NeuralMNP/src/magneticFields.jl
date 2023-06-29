@@ -12,11 +12,14 @@ function generateStructuredFields(params, t, Z; fieldType::FieldType,
   if fieldType == RANDOM_FIELD
     B = rand_interval(-1, 1, length(t), 3, Z)
     for z=1:Z
-      for d in dims
+      if d ∈ dims
         filtFactor = rand_interval(filterFactor[1], filterFactor[2])
         B[:,d,z] = imfilter(B[:,d,z], Kernel.gaussian((filtFactor,))) 
         B[:,d,z] ./= maximum(abs.(B[:,d,z]))
         B[:,d,z] .= maxField*(rand()*B[:,d,z])
+      else
+          B[:,d,z] .= 0
+        end
       end
     end
   elseif fieldType == LOWPASS_RANDOM_FIELD
