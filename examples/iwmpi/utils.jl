@@ -11,7 +11,7 @@ function calcSM(params; device=cpu)
   freq = ntuple( d -> dividers[d] > 1 ? params[:samplingRate] ./ dividers[d] : 0.0, 3)
   ampl = ntuple( d -> dividers[d] > 1 ? params[:maxField] : 0.0, 3)
 
-  BSM = (t, offset) -> SVector{3,Float32}(ampl[1]*sin(2*pi*freq[1]*t)+offset[1], 
+  BSM = (t, offset) -> MNPDynamics.SVector{3,Float32}(ampl[1]*sin(2*pi*freq[1]*t)+offset[1], 
                                           ampl[2]*sin(2*pi*freq[2]*t)+offset[2], 
                                           ampl[3]*sin(2*pi*freq[3]*t)+offset[3] )
   nOffsets = pSM[:nOffsets]
