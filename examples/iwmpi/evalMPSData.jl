@@ -1,4 +1,4 @@
-using MNPDynamics
+using MNPDynamics, NeuralMNP
 using Serialization
 using Plots, StatsPlots
 using Flux, NeuralOperators
