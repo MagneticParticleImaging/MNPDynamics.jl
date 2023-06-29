@@ -17,7 +17,7 @@ BTrain1, pTrain1 = generateStructuredFields(p, tSnippet, p[:numData]÷2;
 BTrain2, pTrain2 = generateStructuredFields(p, tSnippet, p[:numData]÷2; 
         fieldType=LOWPASS_RANDOM_FIELD, freqInterval = (0.0e3, 100.0e3), 
         anisotropyAxis = [1,0,0], dims=1,
-        distribution == :chi)
+        distribution = :chi)
 
 #BTrain2, pTrain2 = generateStructuredFields(p, tSnippet, p[:numData]÷2; fieldType=HARMONIC_RANDOM_FIELD,
 #                                            anisotropyAxis = [1,0,0], dims=1, 
