@@ -19,7 +19,7 @@ p[:numTestData] = p[:numData] - p[:numTrainingData]
 p[:snippetLength] = 200
 p[:samplingRate] = 2.5e6
 p[:maxField] = 0.03
-p[:filterFactor] = (4,20)
+p[:filterFactor] = (8,20)
 
 tSnippet = range(0, step=1/p[:samplingRate], length=p[:snippetLength]);
 device = gpu
