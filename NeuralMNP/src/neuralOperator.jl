@@ -107,7 +107,7 @@ end
 
 ### training function ###
 
-function train(model, opt, trainLoader, testLoader, normalization::NormalizationParams; 
+function train(model, opt, trainLoader, testLoaders, normalization::NormalizationParams; 
                epochs::Integer=10, γ::Float32=0f0, stepSize::Integer=0, plotStep=1, plotting=false, device=cpu)
 
   model = model |> device
@@ -135,22 +135,28 @@ function train(model, opt, trainLoader, testLoader, normalization::Normalization
     end
 		trainLoss /= length(trainLoader)
 
-		testLoss = loss(model, testLoader, normalization, device)
+		testLosses = [loss(model, testLoader, normalization, device) for testLoader in testLoaders]
 
-    println("epoch=$epoch time=$(t_) trainLoss=$trainLoss  testLoss=$testLoss")
+    println("epoch=$epoch time=$(t_) trainLoss=$trainLoss  testLosses=$(join(string.(testLosses).*" "))")
 
     if epoch%plotStep==0
-      test_x, test_y = first(testLoader)
-      train_x, train_y = first(trainLoader)
 
-      test_y_true = sqrt.(sum(abs.(back(test_y |> device, normalization)).^2, dims=2)) |> cpu
-      test_y_pred = sqrt.(sum(abs.(back(model(test_x|> device), normalization)).^2, dims=2)) |> cpu
+      train_x, train_y = first(trainLoader)
       train_y_true = sqrt.(sum(abs.(back(train_y |> device, normalization)).^2, dims=2)) |> cpu
       train_y_pred = sqrt.(sum(abs.(back(model(train_x |> device), normalization)).^2, dims=2)) |> cpu
+      p = Any[]
+      p_ = plot(train_y_true[:,1,1],label="true"); plot!(p_,train_y_pred[:,1,1], label="predict", title="train")
+      push!(p, p_)
 
-      p1 = plot(test_y_true[:,1,1], label="true"); plot!(p1,test_y_pred[:,1,1], label="predict", title="test")
-      p2 = plot(train_y_true[:,1,1],label="true"); plot!(p2,train_y_pred[:,1,1], label="predict", title="train")
-      display(plot(p1, p2, layout=(2,1)))
+      for (i,testLoader) in enumerate(testLoaders)
+        test_x, test_y = first(testLoader)
+        test_y_true = sqrt.(sum(abs.(back(test_y |> device, normalization)).^2, dims=2)) |> cpu
+        test_y_pred = sqrt.(sum(abs.(back(model(test_x|> device), normalization)).^2, dims=2)) |> cpu
+
+        p_ = plot(test_y_true[:,1,1], label="true"); plot!(p_,test_y_pred[:,1,1], label="predict", title="test $i")
+        push!(p, p_)
+      end
+      display(plot(p..., layout=(length(p),1)))
     end
 
     # adjust learning range
