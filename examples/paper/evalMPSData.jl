@@ -1,4 +1,4 @@
-using MNPDynamics
+using MNPDynamics, NeuralMNP
 using Serialization
 using Plots, StatsPlots
 using Flux, NeuralOperators
@@ -20,8 +20,8 @@ function plotExampleSignals(model, kAnis=1100, offset=[0,0,0])
   p[:derivative] = true   
   
   amplitude = 0.012
-  fx = 25000;
-  tMax = 2/fx; 
+  fx = 12500;
+  tMax = 1/fx; 
   tLength = round(Int, tMax*model.params[:samplingRate]);  
 
   t = range(0,step=1/model.params[:samplingRate],length=tLength);
@@ -43,15 +43,15 @@ function plotExampleSignals(model, kAnis=1100, offset=[0,0,0])
     pNO[:alg] = NeuralNetworkMNP
     yNO = simulationMNP(B, t; pNO...)
 
-    plot!(pl1, t[:], y[:,1], lw=2, c=d, label="D=$(DCore[d]) nm true", legend = :outertopright)
-    plot!(pl1, t[:], yNO[:,1], lw=2, ls=:dot, c=d, label="D=$(DCore[d]) nm predict")
+    plot!(pl1, t[:], y[:,1], lw=1, c=d, label="D=$(DCore[d]) nm true", legend = :outertopright)
+    plot!(pl1, t[:], yNO[:,1], lw=1, ls=:dot, c=d, label="D=$(DCore[d]) nm predict")
   end
 
   #kAnis = collect([0, 2000, 6000, 9500])
-  kAnis = collect([0, 1000, 2000, 4500])
+  kAnis = collect([0, 1000, 2500, 4000])
 
   pl2 = plot()
-  p[:DCore] = 24.0e-9         # particle diameter in nm
+  p[:DCore] = 22.0e-9         # particle diameter in nm
   for k=1:length(kAnis)
     p[:kAnis] = kAnis[k]*[1.0;0.0;0] #NeuralMNP.randAxis()  # anisotropy constant and anisotropy axis
 
@@ -64,14 +64,14 @@ function plotExampleSignals(model, kAnis=1100, offset=[0,0,0])
     pNO[:alg] = NeuralNetworkMNP
     yNO = simulationMNP(B, t; pNO...)
 
-    plot!(pl2, t[:], y[:,1], lw=2, c=k, label="kAnis=$(kAnis[k])  true", legend = :outertopright)
-    plot!(pl2, t[:], yNO[:,1], lw=2, ls=:dot, c=k, label="kAnis=$(kAnis[k])  predict")
+    plot!(pl2, t[:], y[:,1], lw=1, c=k, label="kAnis=$(kAnis[k])  true", legend = :outertopright)
+    plot!(pl2, t[:], yNO[:,1], lw=1, ls=:dot, c=k, label="kAnis=$(kAnis[k])  predict")
   end
 
 
   pl3 = plot()
   p[:DCore] = 24e-9         # particle diameter in nm
-  p[:kAnis] = 4000*[1;0;0]
+  p[:kAnis] = 3000*[1;0;0]
   off = collect([-12, -6, 6, 12])
 
   for k=1:length(off)
@@ -85,12 +85,12 @@ function plotExampleSignals(model, kAnis=1100, offset=[0,0,0])
     pNO[:alg] = NeuralNetworkMNP
     yNO = simulationMNP(B, t; pNO...)
 
-    plot!(pl3, t[:], y[:,1], lw=2, c=k, label="off=$(off[k]) mT  true", legend = :outertopright)
-    plot!(pl3, t[:], yNO[:,1], lw=2, ls=:dot, c=k, label="off=$(off[k]) mT  predict")
+    plot!(pl3, t[:], y[:,1], lw=1, c=k, label="off=$(off[k]) mT  true", legend = :outertopright)
+    plot!(pl3, t[:], yNO[:,1], lw=1, ls=:dot, c=k, label="off=$(off[k]) mT  predict")
   end
 
   p_ = plot(pl1, pl2, pl3, layout=(3,1), size=(800,600))
   savefig(p_, "evalMPS.pdf")
   p_
 end
-plotExampleSignals(NOModel, 4500, [0.0,0,0])
+plotExampleSignals(NOModel, 4000, [0.0,0,0])

@@ -6,71 +6,73 @@ using Random
 using Serialization
 
 include("params.jl")
+include("generateData.jl")   
 
-filenameTrain = "trainData.h5"
+inputChan = size(X1,2)
+outputChan = size(Y1,2)
 
-BTrain1, pTrain1 = generateStructuredFields(p, tSnippet, p[:numData]÷4*3; 
-                                      fieldType=RANDOM_FIELD)
-BTrain2, pTrain2 = generateStructuredFields(p, tSnippet, p[:numData]÷4; 
-                                      fieldType=RANDOM_FIELD,
-                                      anisotropyAxis = [1,0,0], dims=1)
+nX = normalizeData(X1; dims=(1,3))
+nY = normalizeData(Y1; dims=(1,3))
 
-#=BTrain1, pTrain1 = generateStructuredFields(p, tSnippet, p[:numData]÷2; 
-        fieldType=LOWPASS_RANDOM_FIELD, freqInterval = (0.0e3, 100.0e3),
-        distribution = :uniform)
-
-BTrain2, pTrain2 = generateStructuredFields(p, tSnippet, p[:numData]÷2; 
-        fieldType=LOWPASS_RANDOM_FIELD, freqInterval = (0.0e3, 100.0e3), 
-        anisotropyAxis = [1,0,0], dims=1,
-        distribution = :uniform)=#
-
-#BTrain2, pTrain2 = generateStructuredFields(p, tSnippet, p[:numData]÷2; fieldType=HARMONIC_RANDOM_FIELD,
-#                                            anisotropyAxis = [1,0,0], dims=1, 
-#                                            freqInterval = (24.999999e3, 25.00001e3))
-
-BTrain, pTrain = combineFields((BTrain1, BTrain2), (pTrain1, pTrain2); shuffle=true)
-                     
-@time mTrain, BTrain = simulationMNPMultiParams(filenameTrain, BTrain, tSnippet, pTrain)
-
-X, Y = prepareTrainData(pTrain, tSnippet, BTrain, mTrain)
-
-inputChan = size(X,2)
-outputChan = size(Y,2)
-
-nX = normalizeData(X; dims=(1,3))
-nY = normalizeData(Y; dims=(1,3))
-
-X .= NeuralMNP.trafo(X, nX)
-Y .= NeuralMNP.trafo(Y, nY)
+X1 .= NeuralMNP.trafo(X1, nX)
+Y1 .= NeuralMNP.trafo(Y1, nY)
+X2 .= NeuralMNP.trafo(X2, nX)
+Y2 .= NeuralMNP.trafo(Y2, nY)
+X3 .= NeuralMNP.trafo(X3, nX)
+Y3 .= NeuralMNP.trafo(Y3, nY)
+X4 .= NeuralMNP.trafo(X4, nX)
+Y4 .= NeuralMNP.trafo(Y4, nY)
 
 bs = 20# 4
 
-trainLoader = DataLoader((X[:,:,1:p[:numTrainingData]],Y[:,:,1:p[:numTrainingData]]), batchsize=bs, shuffle=true)
-testLoader = DataLoader((X[:,:,(p[:numTrainingData]+1):end],Y[:,:,(p[:numTrainingData]+1):end]), batchsize=bs, shuffle=false)
+XTraining1 = X1[:,:,1:p[:numTrainingData]]
+YTraining1 = Y1[:,:,1:p[:numTrainingData]]
+trainLoader1 = DataLoader((XTraining1, YTraining1), batchsize=bs, shuffle=true)
 
-modes = 12 #12#12 #24
+XTraining2 = cat(X1[:,:,1:p[:numTrainingData]], 
+                X2[:,:,1:p[:numTrainingData]], dims=3)
+                #X3[:,:,1:p[:numTrainingData]],
+                #X4[:,:,1:p[:numTrainingData]], dims=3)
+YTraining2 = cat(Y1[:,:,1:p[:numTrainingData]], 
+                Y2[:,:,1:p[:numTrainingData]], dims=3)
+                #Y3[:,:,1:p[:numTrainingData]],
+                #Y4[:,:,1:p[:numTrainingData]], dims=3)
+
+trainLoader2 = DataLoader((XTraining2, YTraining2), batchsize=bs, shuffle=true)
+
+XTraining3 = X2[:,:,1:p[:numTrainingData]]
+YTraining3 = Y2[:,:,1:p[:numTrainingData]]
+trainLoader3 = DataLoader((XTraining3, YTraining3), batchsize=bs, shuffle=true)
+
+testLoaders = Any[]
+push!(testLoaders, DataLoader((X1[:,:,(p[:numTrainingData]+1):end],
+             Y1[:,:,(p[:numTrainingData]+1):end]), batchsize=bs, shuffle=false))
+push!(testLoaders, DataLoader((X2[:,:,(p[:numTrainingData]+1):end],
+             Y2[:,:,(p[:numTrainingData]+1):end]), batchsize=bs, shuffle=false))
+push!(testLoaders, DataLoader((X3[:,:,(p[:numTrainingData]+1):end],
+             Y3[:,:,(p[:numTrainingData]+1):end]), batchsize=bs, shuffle=false))
+push!(testLoaders, DataLoader((X4[:,:,(p[:numTrainingData]+1):end],
+             Y4[:,:,(p[:numTrainingData]+1):end]), batchsize=bs, shuffle=false))
+
+modes = 18 #24
 width = 48
 
 model = NeuralMNP.make_neural_operator_model(inputChan, outputChan, modes, width, NeuralMNP.NeuralOperators.FourierTransform)
 #model = NeuralMNP.make_unet_neural_operator_model(inputChan, outputChan, modes, width, NeuralMNP.NeuralOperators.FourierTransform)
 
-#=ηs = [1f-3,1f-4]#,1f-5]
-γ = 0.5
-stepSize = 30
-epochs = 30
-
-@time for η in ηs
-  global opt = Adam(η)
-  global model = NeuralMNP.train(model, opt, trainLoader, testLoader, nY; epochs, device, plotStep=1)
-end =#
 
 η = 1f-3
 γ = 0.5f0 #1f-1
-stepSize = 100 #* p[:numTrainingData] / bs
-epochs = 110
+stepSize = 10 #* p[:numTrainingData] / bs
+epochs = 32
 
 opt = Adam(η)
-model = NeuralMNP.train(model, opt, trainLoader, testLoader, nY; epochs, device, γ, stepSize, plotStep=1)
+model = NeuralMNP.train(model, opt, trainLoader1, testLoaders, nY; 
+                        epochs, device, γ, stepSize, plotStep=1)
+
+#opt = Adam(η)
+model = NeuralMNP.train(model, opt, trainLoader2, testLoaders, nY; 
+                        epochs, device, γ, stepSize, plotStep=1)
 
 NOModel = NeuralMNP.NeuralNetwork(model, nX, nY, p, p[:snippetLength])
 
