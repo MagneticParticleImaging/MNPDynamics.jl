@@ -47,7 +47,7 @@ function generateStructuredFields(params, t, Z; fieldType::FieldType,
         f = rand_interval(freqInterval[1], freqInterval[2])
         offset = rand_interval(-1,1)
         phase = rand_interval(-π,π)
-        B[:,d,z] = maxField*(γ*sin.(2*π*f*t.+phase) .+ (1-γ)*offset)
+        B[:,d,z] = maxField*rand()*(γ*sin.(2*π*f*t.+phase) .+ (1-γ)*offset)
       end
     end
   elseif fieldType == HARMONIC_MPI_FIELD
@@ -55,7 +55,7 @@ function generateStructuredFields(params, t, Z; fieldType::FieldType,
     freq = params[:frequencies]
     for z=1:Z
       for d in dims
-        B[:,d,z] = maxField*(sin.(2*pi*freq[d]*t) .+ (1-γ)*offset)
+        B[:,d,z] = maxField*rand()*(sin.(2*pi*freq[d]*t) .+ (1-γ)*offset)
       end
     end    
   else
