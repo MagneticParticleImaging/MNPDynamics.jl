@@ -13,13 +13,13 @@ p[:derivative] = false
 p[:solver] = :FBDF         # Use more stable solver
 p[:trainTimeParam] = false
 
-p[:numData] = 5000
+p[:numData] = 30000
 p[:numTrainingData] = round(Int, p[:numData]*0.9)
 p[:numTestData] = p[:numData] - p[:numTrainingData]
 p[:snippetLength] = 200
 p[:samplingRate] = 2.5e6
 p[:maxField] = 0.03
-p[:filterFactor] = (15,20)
+p[:filterFactor] = (17,24)
 
 tSnippet = range(0, step=1/p[:samplingRate], length=p[:snippetLength]);
 device = cpu

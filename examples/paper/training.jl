@@ -18,10 +18,7 @@ X1 .= NeuralMNP.trafo(X1, nX)
 Y1 .= NeuralMNP.trafo(Y1, nY)
 X2 .= NeuralMNP.trafo(X2, nX)
 Y2 .= NeuralMNP.trafo(Y2, nY)
-X3 .= NeuralMNP.trafo(X3, nX)
-Y3 .= NeuralMNP.trafo(Y3, nY)
-X4 .= NeuralMNP.trafo(X4, nX)
-Y4 .= NeuralMNP.trafo(Y4, nY)
+
 
 bs = 20# 4
 
@@ -30,29 +27,22 @@ YTraining1 = Y1[:,:,1:p[:numTrainingData]]
 trainLoader1 = DataLoader((XTraining1, YTraining1), batchsize=bs, shuffle=true)
 
 XTraining2 = cat(X1[:,:,1:p[:numTrainingData]], 
-                X2[:,:,1:p[:numTrainingData]], dims=3)
+                X2[:,:,1:(p[:numTrainingData]÷10)], dims=3)
                 #X3[:,:,1:p[:numTrainingData]],
                 #X4[:,:,1:p[:numTrainingData]], dims=3)
 YTraining2 = cat(Y1[:,:,1:p[:numTrainingData]], 
-                Y2[:,:,1:p[:numTrainingData]], dims=3)
+                Y2[:,:,1:(p[:numTrainingData]÷10)], dims=3)
                 #Y3[:,:,1:p[:numTrainingData]],
                 #Y4[:,:,1:p[:numTrainingData]], dims=3)
 
 trainLoader2 = DataLoader((XTraining2, YTraining2), batchsize=bs, shuffle=true)
 
-XTraining3 = X2[:,:,1:p[:numTrainingData]]
-YTraining3 = Y2[:,:,1:p[:numTrainingData]]
-trainLoader3 = DataLoader((XTraining3, YTraining3), batchsize=bs, shuffle=true)
 
 testLoaders = Any[]
 push!(testLoaders, DataLoader((X1[:,:,(p[:numTrainingData]+1):end],
              Y1[:,:,(p[:numTrainingData]+1):end]), batchsize=bs, shuffle=false))
 push!(testLoaders, DataLoader((X2[:,:,(p[:numTrainingData]+1):end],
              Y2[:,:,(p[:numTrainingData]+1):end]), batchsize=bs, shuffle=false))
-push!(testLoaders, DataLoader((X3[:,:,(p[:numTrainingData]+1):end],
-             Y3[:,:,(p[:numTrainingData]+1):end]), batchsize=bs, shuffle=false))
-push!(testLoaders, DataLoader((X4[:,:,(p[:numTrainingData]+1):end],
-             Y4[:,:,(p[:numTrainingData]+1):end]), batchsize=bs, shuffle=false))
 
 modes = 18 #24
 width = 48
@@ -63,12 +53,12 @@ model = NeuralMNP.make_neural_operator_model(inputChan, outputChan, modes, width
 
 η = 1f-3
 γ = 0.5f0 #1f-1
-stepSize = 10 #* p[:numTrainingData] / bs
+stepSize = 10   #* p[:numTrainingData] / bs
 epochs = 32
 
 opt = Adam(η)
-model = NeuralMNP.train(model, opt, trainLoader1, testLoaders, nY; 
-                        epochs, device, γ, stepSize, plotStep=1)
+#model = NeuralMNP.train(model, opt, trainLoader1, testLoaders, nY; 
+#                        epochs, device, γ, stepSize, plotStep=1)
 
 #opt = Adam(η)
 model = NeuralMNP.train(model, opt, trainLoader2, testLoaders, nY; 

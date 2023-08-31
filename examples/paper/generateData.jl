@@ -20,6 +20,7 @@ BTrain2, pTrain2 = generateStructuredFields(p, tSnippet, p[:numData];
 @time mTrain2, BTrain2 = simulationMNPMultiParams(filenameTrain2, BTrain2, tSnippet, pTrain2)
 X2, Y2 = prepareTrainData(pTrain2, tSnippet, BTrain2, mTrain2)
 
+#=
 filenameTrain3 = joinpath(datadir, "trainData3.h5")
 BTrain3, pTrain3 = generateStructuredFields(p, tSnippet, p[:numData]; 
                                       fieldType=HARMONIC_RANDOM_FIELD, 
@@ -34,3 +35,4 @@ BTrain4, pTrain4 = generateStructuredFields(p, tSnippet, p[:numData];
                                       freqInterval = (10e3, 50e3))
 @time mTrain4, BTrain4 = simulationMNPMultiParams(filenameTrain4, BTrain4, tSnippet, pTrain4)
 X4, Y4 = prepareTrainData(pTrain4, tSnippet, BTrain4, mTrain4)
+=#
