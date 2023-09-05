@@ -18,13 +18,15 @@ XTraining, YTraining =
 
 nX = normalizeData(XTraining; dims=(1,3))
 nY = normalizeData(YTraining; dims=(1,3))
+XTraining .= NeuralMNP.trafo(XTraining, nX)
+YTraining .= NeuralMNP.trafo(YTraining, nY)
 
 bs = 20# 4
 trainLoader = DataLoader((XTraining, YTraining), batchsize=bs, shuffle=true)
 
 # gen validation data
 validationLoaders = Any[]
-for l = 1:2
+for l = 3:4
   R = (p[:numBaseTrainingData]+1):(p[:numBaseTrainingData]+p[:numBaseValidationData])
   XVal, YVal = generateSnippets([XLong[l][:,:,R]], [YLong[l][:,:,R]], 
                      p[:numValidationData], [1.0], p[:snippetLength])
@@ -43,8 +45,8 @@ model = NeuralMNP.make_neural_operator_model(inputChan, outputChan, modes, width
 
 η = 1f-3
 γ = 0.5f0 #1f-1
-stepSize = 10   #* p[:numTrainingData] / bs
-epochs = 30
+stepSize = 20   #* p[:numTrainingData] / bs
+epochs = 100
 
 opt = Adam(η)
 
@@ -54,4 +56,4 @@ model = NeuralMNP.train(model, opt, trainLoader, validationLoaders, nY;
 NOModel = NeuralMNP.NeuralNetwork(model, nX, nY, p, p[:snippetLength])
 
 filenameModel = "model.bin"
-#serialize(filenameModel, NOModel);
+serialize(filenameModel, NOModel);

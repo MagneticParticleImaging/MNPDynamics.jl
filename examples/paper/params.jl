@@ -21,8 +21,8 @@ p[:numBaseValidationData] = round(Int, p[:numBaseData]*splits[2])
 p[:numBaseTestData] = round(Int, p[:numBaseData]*splits[3])
 p[:numBaseTrainingData] = p[:numBaseData] - p[:numBaseValidationData] - p[:numBaseTestData]
 
-p[:numTrainingData] = 1000
-p[:numValidationData] = 100
+p[:numTrainingData] = floor(Int, p[:numBaseTrainingData] * p[:baseDataLength] / p[:snippetLength])  # 400
+p[:numValidationData] = floor(Int,p[:numBaseValidationData] * p[:baseDataLength] / p[:snippetLength]) 
 
 
 
@@ -46,3 +46,13 @@ dfDatasets = DataFrame(samplingDistribution = [:chi, :chi, :uniform, :uniform],
                        maxField = repeat([0.03], numDatasets),
                        numData = repeat([p[:numBaseData]], numDatasets),
                        filename = ["trainData$(i).h5" for i=1:numDatasets])
+
+#=numDatasets = 2
+dfDatasets = DataFrame(samplingDistribution = [:chi, :chi],
+                      fieldDims = [1:3, 1],
+                      anisotropyAxis = [nothing, [1,0,0]],
+                      fieldType = repeat([RANDOM_FIELD], numDatasets),
+                      filterFactor = repeat([(17,24)], numDatasets),
+                      maxField = repeat([0.03], numDatasets),
+                      numData = repeat([p[:numBaseData]], numDatasets),
+                      filename = ["trainData$(i).h5" for i=1:numDatasets])=#

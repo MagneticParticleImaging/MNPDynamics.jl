@@ -23,8 +23,7 @@ for l=1:size(dfDatasets, 1)
                                         anisotropyAxis = dfDatasets.anisotropyAxis[l],
                                         distribution = dfDatasets.samplingDistribution[l])
 
-  @time mTrain, BTrain = simulationMNPMultiParams(filenameTrain, BTrain, tBaseData, pTrain)
-
+  @time mTrain, BTrain = simulationMNPMultiParams(filenameTrain, BTrain, tBaseData, pTrain; force=true)
 
   X, Y = prepareTrainData(pTrain, tBaseData, BTrain, mTrain)
   push!(XLong, X)
