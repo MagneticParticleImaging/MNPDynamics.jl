@@ -108,7 +108,8 @@ end
 ### training function ###
 
 function train(model, opt, trainLoader, testLoaders, normalization::NormalizationParams; 
-               epochs::Integer=10, γ::Float32=0f0, stepSize::Integer=0, plotStep=1, plotting=false, device=cpu)
+               epochs::Integer=10, γ::Float32=0f0, stepSize::Integer=0, plotStep=1,
+               logging::Bool = false, plotting=false, device=cpu)
 
   model = model |> device
   normalization = normalization |> device
@@ -118,9 +119,27 @@ function train(model, opt, trainLoader, testLoaders, normalization::Normalizatio
 
   ηCurrent = opt.eta
 
+  
+	if logging
+		@info "Logging to tensorboard"
+		lg = TBLogger("tensorboard_logs/run", min_level=Logging.Info)
+		set_step_increment!(lg, 0) # no auto increment
+		set_step!(lg, 0)
+		Base.global_logger(lg)
+
+		log_text(lg, "training params/epochs", epochs)
+    log_text(lg, "training params/stepSize", stepSize)
+    log_text(lg, "training params/γ", γ)
+	end
+
+
 	for epoch in 1:epochs
+    if logging
+  		set_step!(lg, epoch)
+    end
 
 		trainLoss = Float32(0.0)
+
     t_ = @elapsed begin
     # @showprogress "Epoch $epoch" for (x,y) in trainLoader
     for (x,y) in trainLoader
@@ -139,6 +158,10 @@ function train(model, opt, trainLoader, testLoaders, normalization::Normalizatio
 
     println("epoch=$epoch time=$(t_) trainLoss=$trainLoss  testLosses=$(join(string.(testLosses).*" "))")
 
+    @info "TrainLoss" loss = trainLoss
+    for r = 1:length(testLosses) 
+      @info "ValidationLoss $r" loss = testLosses[r]
+    end
     if epoch%plotStep==0
 
       train_x, train_y = first(trainLoader)
@@ -375,5 +398,3 @@ function MNPDynamics.simulationMNP(B::g, t, ::NeuralNetworkMNPAlg;
     return m
   end
 end
-
-

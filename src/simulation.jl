@@ -204,7 +204,7 @@ function set_up_simulation(B::g, tVec;
   # The following tries to find out discontinuities which helps the solver
   B_ = [B(t)[d] for d=1:3, t in tVec]
   BD_ = vec(sum(abs.(diff(B_, dims=2)),dims=1) ./ maximum(abs.(B_)))
-  tstops = ((tVec[1:end-1])[BD_ .> 0.2]) # 0.2 is a magic number
+  tstops = ((tVec[1:end-1])[BD_ .> 0.1]) # 0.1 is a magic number
   
   p = MNPSimulationParams(BRot, m_offset, m_b3, m_bp, m_bm, idx_offset, idx_b3, idx_bp, idx_bm)
 
@@ -218,10 +218,16 @@ end
 function simulate(prob, solver, reltol, abstol, tstops)
   if solver == :FBDF
     sol = solve(prob, FBDF(), reltol=reltol, abstol=abstol, tstops=tstops)
+    if !SciMLBase.successful_retcode(sol)
+      sol = solve(prob, Rodas5(autodiff=false), reltol=reltol, abstol=abstol, tstops=tstops)
+      if !SciMLBase.successful_retcode(sol)
+        error("Solver did not succeed!")
+      end
+    end
   elseif solver == :Rodas5
     sol = solve(prob, Rodas5(autodiff=false), reltol=reltol, abstol=abstol, tstops=tstops)
   else
-    error("Solver $(solver) not available")
+    error("Solver $(solver) not available!")
   end
   return sol
 end
@@ -312,8 +318,3 @@ function simulationMNP(B::Matrix{T}, t; kargs...) where {T}
   end
   return magneticMoments
 end
-
-
-
-
-

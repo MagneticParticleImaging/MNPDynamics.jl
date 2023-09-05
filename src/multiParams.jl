@@ -105,8 +105,8 @@ function simulationMNPMultiParams(B::Array{T,3}, t; kargs...) where {T}
   return simulationMNPMultiParams(BFunc, t, params; kargs...)
 end
 
-function simulationMNPMultiParams(filename::AbstractString, B::Array{T,3}, t, params) where {T}
-  if !isfile(filename)
+function simulationMNPMultiParams(filename::AbstractString, B::Array{T,3}, t, params; force=false) where {T}
+  if !isfile(filename) || force
     m = simulationMNPMultiParams(B, t; params...)
     h5open(filename,"w") do h5
       h5["magneticMoments"] = m
@@ -128,4 +128,3 @@ function simulationMNPMultiParams(filename::AbstractString, B::Array{T,3}, t, pa
   end
   return m, B
 end
-
