@@ -4,35 +4,65 @@ using LinearAlgebra
 using Statistics, MLUtils, Flux
 using Random
 using Serialization
+using DataFrames
 
 include("params.jl")
 
-filenameTrain1 = joinpath(datadir, "trainData1.h5")
-BTrain1, pTrain1 = generateStructuredFields(p, tSnippet, p[:numData]; 
-                                      fieldType=RANDOM_FIELD)
-@time mTrain1, BTrain1 = simulationMNPMultiParams(filenameTrain1, BTrain1, tSnippet, pTrain1)
-X1, Y1 = prepareTrainData(pTrain1, tSnippet, BTrain1, mTrain1)
+XLong = Any[]
+YLong = Any[]
 
-filenameTrain2 = joinpath(datadir, "trainData2.h5")
-BTrain2, pTrain2 = generateStructuredFields(p, tSnippet, p[:numData]; 
-                                      fieldType=RANDOM_FIELD, 
-                                      anisotropyAxis = [1,0,0], dims=1)
-@time mTrain2, BTrain2 = simulationMNPMultiParams(filenameTrain2, BTrain2, tSnippet, pTrain2)
-X2, Y2 = prepareTrainData(pTrain2, tSnippet, BTrain2, mTrain2)
+for l=1:size(dfDatasets, 1)
+  filenameTrain = joinpath(datadir, dfDatasets.filename[l])
+  BTrain = generateRandomFields(tBaseData, dfDatasets.numData[l]; 
+                                      fieldType = dfDatasets.fieldType[l], 
+                                      dims = dfDatasets.fieldDims[l],
+                                      filterFactor = dfDatasets.filterFactor[l],
+                                      maxField = dfDatasets.maxField[l])
 
-#=
-filenameTrain3 = joinpath(datadir, "trainData3.h5")
-BTrain3, pTrain3 = generateStructuredFields(p, tSnippet, p[:numData]; 
-                                      fieldType=HARMONIC_RANDOM_FIELD, 
-                                      freqInterval = (10e3, 50e3))
-@time mTrain3, BTrain3 = simulationMNPMultiParams(filenameTrain3, BTrain3, tSnippet, pTrain3)
-X3, Y3 = prepareTrainData(pTrain3, tSnippet, BTrain3, mTrain3)
+  pTrain = generateRandomParticleParams(p, dfDatasets.numData[l]; 
+                                        anisotropyAxis = dfDatasets.anisotropyAxis[l],
+                                        distribution = dfDatasets.samplingDistribution[l])
 
-filenameTrain4 = joinpath(datadir, "trainData4.h5")
-BTrain4, pTrain4 = generateStructuredFields(p, tSnippet, p[:numData]; 
-                                      fieldType=HARMONIC_RANDOM_FIELD, 
-                                      anisotropyAxis = [1,0,0], dims=1,
-                                      freqInterval = (10e3, 50e3))
-@time mTrain4, BTrain4 = simulationMNPMultiParams(filenameTrain4, BTrain4, tSnippet, pTrain4)
-X4, Y4 = prepareTrainData(pTrain4, tSnippet, BTrain4, mTrain4)
-=#
+  @time mTrain, BTrain = simulationMNPMultiParams(filenameTrain, BTrain, tBaseData, pTrain)
+
+
+  X, Y = prepareTrainData(pTrain, tBaseData, BTrain, mTrain)
+  push!(XLong, X)
+  push!(YLong, Y)
+end
+
+
+
+function generateSnippets(Xs, Ys, numData, weights, snippetLength)
+  weights ./= sum(weights)
+  N = length(Xs)
+  numDataEachSet = zeros(Int, N)
+  counter = numData
+  for l = 1:(N-1)
+    numDataEachSet[l] = round(Int, numData*weights[l])
+    counter -= numDataEachSet[l]
+  end
+  numDataEachSet[end] = counter
+
+  @assert sum(numDataEachSet) == numData
+
+  XOut = zeros(eltype(Xs[1]), snippetLength, size(Xs[1],2), numData)
+  YOut = zeros(eltype(Ys[1]), snippetLength, size(Ys[1],2), numData)
+  
+  counter = 1
+  for l = 1:N
+    M = size(Xs[l],3)
+    numSnippetEachConfiguration = ceil(Int, numDataEachSet[l] / M)
+    currConfig = 1
+    for j = 1:numDataEachSet[l]
+      currOffset = max(size(Xs[l],1) - snippetLength -
+                   floor(Int, (size(Xs[l],1) - snippetLength) * ((j-1)÷M) / numSnippetEachConfiguration), 1)
+      
+      XOut[:,:,counter] .= Xs[l][currOffset:currOffset+snippetLength-1,:,currConfig]
+      YOut[:,:,counter] .= Ys[l][currOffset:currOffset+snippetLength-1,:,currConfig]
+      currConfig = mod1(currConfig+1, M)
+      counter += 1
+    end
+  end
+  return XOut, YOut
+end

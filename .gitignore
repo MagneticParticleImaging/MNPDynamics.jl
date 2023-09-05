@@ -4,6 +4,7 @@
 /deps/deps.jl
 /docs/build
 examples/tmp
+examples/paper/tensorboard_logs
 tmp
 *.h5
 *.bson

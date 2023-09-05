@@ -7,12 +7,12 @@ filenameModel = "model.bin"
 NOModel = deserialize(filenameModel)
 include("params.jl")
 
-function plotExampleSignals(model, kAnis=1100, offset=[0,0,0])
+function plotExampleSignals(model, kAnis, offset=[0,0,0])
   
   p = Dict{Symbol,Any}()
   p[:α] = 0.1               # damping coefficient
   p[:kAnis] = kAnis*[1.0,0.0,0.0] # anisotropy constant and anisotropy axis
-  p[:N] = 30                # maximum spherical harmonics index to be considered
+  p[:N] = 20                # maximum spherical harmonics index to be considered
   p[:relaxation] = NEEL     # relaxation mode
   p[:reltol] = 1e-4         # relative tolerance
   p[:abstol] = 1e-6         # absolute tolerance
@@ -90,7 +90,7 @@ function plotExampleSignals(model, kAnis=1100, offset=[0,0,0])
   end
 
   p_ = plot(pl1, pl2, pl3, layout=(3,1), size=(800,600))
-  savefig(p_, "evalMPS.pdf")
+  savefig(p_, "img/evalMPS.png")
   p_
 end
 plotExampleSignals(NOModel, 4000, [0.0,0,0])

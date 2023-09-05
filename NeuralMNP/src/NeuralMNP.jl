@@ -11,6 +11,8 @@ using ProgressMeter
 using Distributions
 using FFTW
 
+using TensorBoardLogger, Logging
+
 using Plots
 
 using ImageFiltering

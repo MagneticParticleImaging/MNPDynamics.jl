@@ -1,13 +1,12 @@
 
-export generateStructuredFields
-function generateStructuredFields(params, t, Z; fieldType::FieldType, 
-                                             anisotropyAxis=nothing,
+export generateRandomFields, generateRandomParticleParams
+
+function generateRandomFields(t, Z; fieldType::FieldType, 
                                              dims = 1:3,
                                              freqInterval = (20e3, 50e3),
-                                             distribution = :uniform)
-
-  filterFactor = get(params, :filterFactor, (4,20))
-  maxField = params[:maxField]
+                                             frequencies = nothing,
+                                             filterFactor = (4,20),
+                                             maxField = 30e-3 )
 
   if fieldType == RANDOM_FIELD
     B = rand_interval(-1, 1, length(t), 3, Z)
@@ -52,7 +51,7 @@ function generateStructuredFields(params, t, Z; fieldType::FieldType,
     end
   elseif fieldType == HARMONIC_MPI_FIELD
     B = zeros(Float32, length(t), 3, Z)
-    freq = params[:frequencies]
+    freq = frequencies
     for z=1:Z
       for d in dims
         B[:,d,z] = maxField*rand()*(sin.(2*pi*freq[d]*t) .+ (1-γ)*offset)
@@ -62,6 +61,11 @@ function generateStructuredFields(params, t, Z; fieldType::FieldType,
     error("field type $fieldType not supported!")
   end
 
+  return B
+end
+
+function generateRandomParticleParams(params, Z; anisotropyAxis=nothing,
+                                              distribution = :uniform)
   paramsInner = copy(params)
 
   if haskey(params, :DCore) && typeof(params[:DCore]) <: Tuple
@@ -75,8 +79,7 @@ function generateStructuredFields(params, t, Z; fieldType::FieldType,
       paramsInner[:kAnis] = [ rand_interval(params[:kAnis][1], params[:kAnis][2]; distribution)*anisotropyAxis for z=1:Z ]
     end
   end
-
-  return B, paramsInner
+  return paramsInner
 end
 
 export combineFields
