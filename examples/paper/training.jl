@@ -54,7 +54,7 @@ model = NeuralMNP.make_neural_operator_model(inputChan, outputChan, modes, width
 η = 1f-3
 γ = 0.5f0 #1f-1
 stepSize = 10   #* p[:numTrainingData] / bs
-epochs = 32
+epochs = 100
 
 opt = Adam(η)
 #model = NeuralMNP.train(model, opt, trainLoader1, testLoaders, nY; 

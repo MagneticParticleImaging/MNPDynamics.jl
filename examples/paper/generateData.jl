@@ -40,7 +40,7 @@ pTrain2 = generateRandomParticleParams(p, p[:numData];
                                         anisotropyAxis = [1,0,0],
                                         distribution = :uniform)
 
-@time mTrain2, BTrain2 = simulationMNPMultiParams(filenameTrain2, BTrain2, tSnippet, pTrain2, force=true)
+@time mTrain2, BTrain2 = simulationMNPMultiParams(filenameTrain2, BTrain2, tSnippet, pTrain2, force=forceDataGen)
 X2, Y2 = prepareTrainData(pTrain2, tSnippet, BTrain2, mTrain2)
 
 Random.seed!(1)
