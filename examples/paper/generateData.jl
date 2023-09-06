@@ -7,18 +7,43 @@ using Serialization
 
 include("params.jl")
 
+Random.seed!(1)
+
 filenameTrain1 = joinpath(datadir, "trainData1.h5")
-BTrain1, pTrain1 = generateStructuredFields(p, tSnippet, p[:numData]; 
-                                      fieldType=RANDOM_FIELD)
-@time mTrain1, BTrain1 = simulationMNPMultiParams(filenameTrain1, BTrain1, tSnippet, pTrain1)
+#BTrain1, pTrain1 = generateStructuredFields(p, tSnippet, p[:numData]; 
+#                                      fieldType=RANDOM_FIELD)
+
+BTrain1 = generateRandomFields(tSnippet, p[:numData]; 
+                                      fieldType = RANDOM_FIELD, 
+                                      dims = 1:3,
+                                      filterFactor = p[:filterFactor],
+                                      maxField = p[:maxField])
+
+pTrain1 = generateRandomParticleParams(p, p[:numData]; 
+                                        anisotropyAxis = nothing,
+                                        distribution = :uniform)
+
+@time mTrain1, BTrain1 = simulationMNPMultiParams(filenameTrain1, BTrain1, tSnippet, pTrain1, force=true)
 X1, Y1 = prepareTrainData(pTrain1, tSnippet, BTrain1, mTrain1)
 
 filenameTrain2 = joinpath(datadir, "trainData2.h5")
-BTrain2, pTrain2 = generateStructuredFields(p, tSnippet, p[:numData]; 
-                                      fieldType=RANDOM_FIELD, 
-                                      anisotropyAxis = [1,0,0], dims=1)
-@time mTrain2, BTrain2 = simulationMNPMultiParams(filenameTrain2, BTrain2, tSnippet, pTrain2)
+#BTrain2, pTrain2 = generateStructuredFields(p, tSnippet, p[:numData]; 
+#                                      fieldType=RANDOM_FIELD, 
+#                                      anisotropyAxis = [1,0,0], dims=1)
+BTrain2 = generateRandomFields(tSnippet, p[:numData]; 
+                                      fieldType = RANDOM_FIELD, 
+                                      dims = 1,
+                                      filterFactor = p[:filterFactor],
+                                      maxField = p[:maxField])
+
+pTrain2 = generateRandomParticleParams(p, p[:numData]; 
+                                        anisotropyAxis = [1,0,0],
+                                        distribution = :uniform)
+
+@time mTrain2, BTrain2 = simulationMNPMultiParams(filenameTrain2, BTrain2, tSnippet, pTrain2, force=true)
 X2, Y2 = prepareTrainData(pTrain2, tSnippet, BTrain2, mTrain2)
+
+Random.seed!(1)
 
 #=
 filenameTrain3 = joinpath(datadir, "trainData3.h5")
