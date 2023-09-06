@@ -318,8 +318,3 @@ function simulationMNP(B::Matrix{T}, t; kargs...) where {T}
   end
   return magneticMoments
 end
-
-
-
-
-

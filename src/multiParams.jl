@@ -128,4 +128,3 @@ function simulationMNPMultiParams(filename::AbstractString, B::Array{T,3}, t, pa
   end
   return m, B
 end
-
