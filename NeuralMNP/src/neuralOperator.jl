@@ -158,9 +158,11 @@ function train(model, opt, trainLoader, testLoaders, normalization::Normalizatio
 
     println("epoch=$epoch time=$(t_) trainLoss=$trainLoss  testLosses=$(join(string.(testLosses).*" "))")
 
-    @info "TrainLoss" loss = trainLoss
-    for r = 1:length(testLosses) 
-      @info "ValidationLoss $r" loss = testLosses[r]
+    if logging
+      @info "TrainLoss" loss = trainLoss
+      for r = 1:length(testLosses) 
+        @info "ValidationLoss $r" loss = testLosses[r]
+      end
     end
     if epoch%plotStep==0
 
