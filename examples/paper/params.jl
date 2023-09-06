@@ -29,6 +29,6 @@ datadir = "./data"
 
 mkpath(datadir)
 
-forceDataGen = false
+forceDataGen = true
 
 datasets = []

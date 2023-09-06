@@ -21,9 +21,9 @@ BTrain1 = generateRandomFields(tSnippet, p[:numData];
 
 pTrain1 = generateRandomParticleParams(p, p[:numData]; 
                                         anisotropyAxis = nothing,
-                                        distribution = :uniform)
+                                        distribution = :chi)
 
-@time mTrain1, BTrain1 = simulationMNPMultiParams(filenameTrain1, BTrain1, tSnippet, pTrain1, force=true)
+@time mTrain1, BTrain1 = simulationMNPMultiParams(filenameTrain1, BTrain1, tSnippet, pTrain1, force=forceDataGen)
 X1, Y1 = prepareTrainData(pTrain1, tSnippet, BTrain1, mTrain1)
 
 filenameTrain2 = joinpath(datadir, "trainData2.h5")
@@ -38,7 +38,7 @@ BTrain2 = generateRandomFields(tSnippet, p[:numData];
 
 pTrain2 = generateRandomParticleParams(p, p[:numData]; 
                                         anisotropyAxis = [1,0,0],
-                                        distribution = :uniform)
+                                        distribution = :chi)
 
 @time mTrain2, BTrain2 = simulationMNPMultiParams(filenameTrain2, BTrain2, tSnippet, pTrain2, force=forceDataGen)
 X2, Y2 = prepareTrainData(pTrain2, tSnippet, BTrain2, mTrain2)
