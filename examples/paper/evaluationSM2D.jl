@@ -61,9 +61,9 @@ end
 
 MX = MY = 4
 
-plot2DSM(rfft(reshape(sm[:FluidFNO],:,3,N,N),1), MX, MY; filename="systemMatrixFluidFNO.png")
-plot2DSM(rfft(reshape(sm[:Immobilized135FNO],:,3,N,N),1), MX, MY; filename="systemMatrixImmobilized135FNO.png")
-plot2DSM(rfft(reshape(sm[:Immobilized45FNO],:,3,N,N),1), MX, MY; filename="systemMatrixImmobilized45FNO.png")
+plot2DSM(rfft(reshape(sm[:FluidFNO],:,3,N,N),1), MX, MY; filename="img/systemMatrixFluidFNO.png")
+plot2DSM(rfft(reshape(sm[:Immobilized135FNO],:,3,N,N),1), MX, MY; filename="img/systemMatrixImmobilized135FNO.png")
+plot2DSM(rfft(reshape(sm[:Immobilized45FNO],:,3,N,N),1), MX, MY; filename="img/systemMatrixImmobilized45FNO.png")
 #=plot2DSM(rfft(reshape(sm[:FluidFokkerPlanck],:,3,N,N),1), MX, MY; filename="systemMatrixFluidFokkerPlanck.png")
 plot2DSM(rfft(reshape(sm[:Immobilized135FokkerPlanck],:,3,N,N),1), MX, MY; filename="systemMatrixImmobilized135FokkerPlanck.png")
 plot2DSM(rfft(reshape(sm[:Immobilized45FokkerPlanck],:,3,N,N),1), MX, MY; filename="systemMatrixImmobilized45FokkerPlanck.png")
