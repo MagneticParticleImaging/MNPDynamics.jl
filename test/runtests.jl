@@ -3,3 +3,4 @@ using Test, LinearAlgebra, StaticArrays
 
 include("accuracy.jl")
 include("multiParams.jl")
+include("neuralMNP.jl")
