@@ -16,7 +16,7 @@ outputChan = size(YLong[1], 2)
 XTraining, YTraining = 
    generateSnippets([X[:,:,1:p[:numBaseTrainingData]] for X in XLong[1:2]], 
                     [Y[:,:,1:p[:numBaseTrainingData]] for Y in YLong[1:2]], 
-                     p[:numTrainingData], [0.8,0.2], p[:snippetLength])
+                     p[:numTrainingData], [0.6,0.4], p[:snippetLength])
 
 nX = normalizeData(XTraining; dims=(1,3))
 nY = normalizeData(YTraining; dims=(1,3))
@@ -52,8 +52,8 @@ epochs = 20
 
 opt = Adam(η)
 
-model = NeuralMNP.train(model, opt, trainLoader2, testLoaders, nY; 
-                        epochs, device, γ, stepSize, plotStep=1)
+model = NeuralMNP.train(model, opt, trainLoader, testLoaders, nY; 
+                        epochs, device, γ, stepSize, plotStep=1, logging=true)
 
 NOModel = NeuralMNP.NeuralNetwork(model, nX, nY, p, p[:snippetLength])
 

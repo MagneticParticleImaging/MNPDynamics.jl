@@ -8,7 +8,7 @@ using DataFrames
 
 include("params.jl")
 
-Random.seed!(1)
+Random.seed!(seed)
 
 XLong = Any[]
 YLong = Any[]
@@ -33,4 +33,4 @@ for l=1:size(dfDatasets, 1)
 end
 
 
-Random.seed!(1)
+Random.seed!(seed)

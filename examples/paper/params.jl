@@ -16,10 +16,10 @@ p[:solver] = :FBDF         # Use more stable solver
 p[:trainTimeParam] = false
 p[:samplingRate] = 2.5e6
 
-p[:numBaseData] = 50
+p[:numBaseData] = 500
 p[:baseDataLength] = 200
 p[:snippetLength] = 200
-splits = (0.9, 0.05, 0.05)
+splits = (0.9, 0.1, 0.0)
 p[:numBaseValidationData] = round(Int, p[:numBaseData]*splits[2])
 p[:numBaseTestData] = round(Int, p[:numBaseData]*splits[3])
 p[:numBaseTrainingData] = p[:numBaseData] - p[:numBaseValidationData] - p[:numBaseTestData]
@@ -37,6 +37,7 @@ mkpath(datadir)
 mkpath(imgdir)
 
 forceDataGen = true
+seed = 2
 
 #=numDatasets = 4
 dfDatasets = DataFrame(samplingDistribution = [:chi, :chi, :uniform, :uniform],
