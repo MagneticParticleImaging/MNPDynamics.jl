@@ -3,16 +3,25 @@ using NeuralMNP
 using LinearAlgebra
 using Statistics, MLUtils, Flux
 using Random
-using Images
 using Serialization
 
 include("params.jl")
 
 filenameTrain = "trainData.h5"
 
-BTrain, pTrain = generateStructuredFields(p, tSnippet, p[:numData]; fieldType=RANDOM_FIELD)
-                     
-@time mTrain, BTrain = simulationMNPMultiParams(filenameTrain, BTrain, tSnippet, pTrain)
+BTrain = generateRandomFields(tSnippet, p[:numData]; 
+                                      fieldType = RANDOM_FIELD, 
+                                      dims = 1:3,
+                                      filterFactor = p[:filterFactor],
+                                      maxField = p[:maxField])
+
+pTrain = generateRandomParticleParams(p, p[:numData]; 
+                                        anisotropyAxis = nothing,
+                                        distribution = :uniform)
+
+@time mTrain, BTrain = simulationMNPMultiParams(filenameTrain, BTrain, tSnippet, pTrain, force=false)
+
+
 
 X, Y = prepareTrainData(pTrain, tSnippet, BTrain, mTrain)
 
@@ -43,7 +52,7 @@ epochs = 30
 #opt = Flux.Optimiser(ExpDecay(η, γ, stepSize, 1f-5), Adam())
 @time for η in ηs
   global opt = Adam(η)
-  global model = NeuralMNP.train(model, opt, trainLoader, testLoader, nY; epochs, device, plotStep=1)
+  global model = NeuralMNP.train(model, opt, trainLoader, [testLoader], nY; epochs, device, plotStep=1)
 end
 
 NOModel = NeuralMNP.NeuralNetwork(model, nX, nY, p, p[:snippetLength])
