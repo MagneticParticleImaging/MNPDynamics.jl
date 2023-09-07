@@ -39,23 +39,27 @@ end
 
 
 modes = 12 #24
-width = 32
+width = 48
 
 model = NeuralMNP.make_neural_operator_model(inputChan, outputChan, modes, width, NeuralMNP.NeuralOperators.FourierTransform)
 #model = NeuralMNP.make_unet_neural_operator_model(inputChan, outputChan, modes, width, NeuralMNP.NeuralOperators.FourierTransform)
 
 
 η = 1f-3
-γ = 0.5f0 #1f-1
-stepSize = 10   #* p[:numTrainingData] / bs
-epochs = 20
+#γ = 0.5f0 #1f-1
+γ = 1f-1
+stepSize = 30   #* p[:numTrainingData] / bs
+epochs = 100
 
 opt = Adam(η)
 
-model = NeuralMNP.train(model, opt, trainLoader, testLoaders, nY; 
+model = NeuralMNP.train(model, opt, trainLoader, validationLoaders, nY; 
                         epochs, device, γ, stepSize, plotStep=1, logging=true)
 
 NOModel = NeuralMNP.NeuralNetwork(model, nX, nY, p, p[:snippetLength])
 
 filenameModel = "model.bin"
 serialize(filenameModel, NOModel);
+
+
+testLosses = [loss(model, testLoader, nY, device) for testLoader in validationLoaders]
