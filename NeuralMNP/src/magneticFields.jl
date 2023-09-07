@@ -1,5 +1,5 @@
 
-export generateRandomFields, generateRandomParticleParams
+export generateRandomFields, generateRandomParticleParams, generateSnippets
 
 function generateRandomFields(t, Z; fieldType::FieldType, 
                                              dims = 1:3,
@@ -124,4 +124,46 @@ end
 # apply frequency filter to signal
 function filterSignal(x, filt)
   return ifft( ifftshift(filt) .* fft( x, 1) )
+end
+
+function generateSnippets(Xs, Ys, numData, weights, snippetLength)
+  weights ./= sum(weights)
+  N = length(Xs)
+  numDataEachSet = zeros(Int, N)
+  counter = numData
+  for l = 1:(N-1)
+    numDataEachSet[l] = round(Int, numData*weights[l])
+    counter -= numDataEachSet[l]
+  end
+  numDataEachSet[end] = counter
+
+  @assert sum(numDataEachSet) == numData
+
+  XOut = zeros(eltype(Xs[1]), snippetLength, size(Xs[1],2), numData)
+  YOut = zeros(eltype(Ys[1]), snippetLength, size(Ys[1],2), numData)
+
+  counter = 1
+  for l = 1:N
+    M = size(Xs[l],3)
+    numSnippetEachConfiguration = ceil(Int, numDataEachSet[l] / M)
+    currConfig = 1
+    for j = 1:numDataEachSet[l]
+      currOffset = max(size(Xs[l],1) - snippetLength + 1, 1)
+      if numSnippetEachConfiguration > 1
+        currOffset = max(currOffset -
+                          floor(Int, (size(Xs[l],1) - snippetLength) * ((j-1)÷M) 
+                              / (numSnippetEachConfiguration-1)), 1)
+
+      end
+      #if mod1(j,M) == M  # just for debugging purpose
+      #  println(currOffset)
+      #end
+
+      XOut[:,:,counter] .= Xs[l][currOffset:currOffset+snippetLength-1,:,currConfig]
+      YOut[:,:,counter] .= Ys[l][currOffset:currOffset+snippetLength-1,:,currConfig]
+      currConfig = mod1(currConfig+1, M)
+      counter += 1
+    end
+  end
+  return XOut, YOut
 end

@@ -46,8 +46,8 @@ model = NeuralMNP.make_neural_operator_model(inputChan, outputChan, modes, width
 
 ηs = [1f-3,1f-4,1f-5]
 γ = 0.5
-stepSize = 30
-epochs = 30
+stepSize = 100
+epochs = 100
 
 #opt = Flux.Optimiser(ExpDecay(η, γ, stepSize, 1f-5), Adam())
 @time for η in ηs
