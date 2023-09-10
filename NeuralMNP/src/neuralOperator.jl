@@ -325,8 +325,7 @@ end
 
 hannWindow(M) = (1.0 .- cos.(2*π/(M-1)*(0:(M-1))))/(M-1)*M .+ 0.001
 
-function applyToArbitrarySignal(neuralNetwork::NeuralNetwork, X; device=cpu, kargs...)
-  snippetLength = neuralNetwork.timeLength
+function applyToArbitrarySignal(neuralNetwork::NeuralNetwork, X, snippetLength; device=cpu, kargs...)
   N = size(X,1)
   stepSize = snippetLength ÷ 2
 
@@ -384,7 +383,9 @@ function MNPDynamics.simulationMNP(B::g, t, ::NeuralNetworkMNPAlg;
 
   X = prepareTestData(neuralNetwork.params, Dict(kargs), t, BTime)
 
-  m = applyToArbitrarySignal(neuralNetwork, X; kargs...)
+  snippetLength = neuralNetwork.timeLength*floor(Int, (1/step(t)) / neuralNetwork.params[:samplingRate])
+
+  m = applyToArbitrarySignal(neuralNetwork, X, snippetLength; kargs...)
 
   ε = (t[2]-t[1]) / 4
 
@@ -394,7 +395,7 @@ function MNPDynamics.simulationMNP(B::g, t, ::NeuralNetworkMNPAlg;
     end
   
     X = prepareTestData(neuralNetwork.params, Dict(kargs), t, BTime)
-    m2 = applyToArbitrarySignal(neuralNetwork, X; kargs...)
+    m2 = applyToArbitrarySignal(neuralNetwork, X, snippetLength; kargs...)
     return (m2.-m) ./ ε 
   else
     return m
