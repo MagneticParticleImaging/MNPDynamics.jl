@@ -127,6 +127,7 @@ function filterSignal(x, filt)
 end
 
 function generateSnippets(Xs, Ys, numData, weights, snippetLength)
+  weights = collect(weights)
   weights ./= sum(weights)
   N = length(Xs)
   numDataEachSet = zeros(Int, N)
