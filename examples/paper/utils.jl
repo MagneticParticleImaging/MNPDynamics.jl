@@ -35,3 +35,15 @@ end
 function relError(ŷ::AbstractArray, y::AbstractArray)
   return mean( NeuralMNP.norm_l2(ŷ.-y, dims=(1,2)) ./ NeuralMNP.norm_l2(y, dims=(1,2)) )
 end
+
+
+colors = [(0/255,73/255,146/255), # UKE blau
+(239/255,123/255,5/255),	# Orange (dunkel)
+(138/255,189/255,36/255),	# Grün
+(178/255,34/255,41/255), # Rot
+(170/255,156/255,143/255), 	# Mocca
+(87/255,87/255,86/255),	# Schwarz (Schrift)
+(255/255,223/255,0/255), # Gelb
+(104/255,195/255,205/255),	# "TUHH"
+(45/255,198/255,214/255), #  TUHH
+(193/255,216/255,237/255)]
