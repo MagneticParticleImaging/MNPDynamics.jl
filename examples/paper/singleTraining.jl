@@ -71,7 +71,8 @@ NOModel = NeuralMNP.NeuralNetwork(model, nX, nY, p, p[:snippetLength])
 
 filenameModel = "model.bin"
 serialize(filenameModel, NOModel);
-
+#filenameModel = "model.bin"
+#NOModel = deserialize(filenameModel)
 
 
 function plotErrorStatistics(p, neuralNetwork, X, Y)
@@ -114,6 +115,3 @@ function plotErrorStatistics(p, neuralNetwork, X, Y)
 end
 
 plotErrorStatistics(p, NOModel, validationLoaders[1].data[1], validationLoaders[1].data[2])
-
-
-testLosses = [loss(model, testLoader, nY, device) for testLoader in validationLoaders]

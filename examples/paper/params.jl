@@ -34,6 +34,7 @@ tSnippet = range(0, step=1/p[:samplingRate], length=p[:snippetLength]);
 device = gpu
 datadir = "./data"
 imgdir = "./img"
+modeldir = "./models"
 
 mkpath(datadir)
 mkpath(imgdir)
@@ -60,3 +61,106 @@ dfDatasets = DataFrame(samplingDistribution = [:chi, :chi],
                       maxField = repeat([0.03], numDatasets),
                       numData = repeat([p[:numBaseData]], numDatasets),
                       filename = ["trainData$(i).h5" for i=1:numDatasets])
+
+
+
+
+
+dfTraining = DataFrame()
+
+
+defaultNetworkParams = (
+  networkModes = 18,
+  networkWidth = 48,
+)
+
+defaultTrainingParams = (
+  η = 1f-3,
+  γ = 0.5f0,
+  stepSize = 30,
+  epochs = 300,
+  batchSize = 20
+)
+
+defaultWeighting = (0.9, 0.1)
+
+defaultNumTrainingData = p[:numTrainingData]
+
+### Study 1: Compare distributions for fixed
+
+# Weighting Study 
+weights = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
+
+for d=1:length(weights)
+  push!(dfTraining, (;
+       datasetTraining = (1,2),
+       datasetTrainingWeighting = (1.0-weights[d], weights[d]),
+       numTrainingData = defaultNumTrainingData,
+       datasetValidation = (1, 2),
+       defaultNetworkParams...,
+       defaultTrainingParams...
+      ) 
+    )
+end
+
+# Num Data Study 
+numData = [1000, 5000, 10000, 20000, 50000]
+
+for d=1:length(numData)
+  push!(dfTraining, (;
+       datasetTraining = (1,2),
+       datasetTrainingWeighting = defaultWeighting,
+       numTrainingData = numData[d],
+       datasetValidation = (1, 2),
+       defaultNetworkParams...,
+       defaultTrainingParams...
+      ) 
+    )
+end
+
+
+
+# Sampling Study
+push!(dfTraining, (;
+      datasetTraining = (1,2),
+      datasetTrainingWeighting = defaultWeighting,
+      numTrainingData = defaultNumTrainingData,
+      datasetValidation = (1, 2),
+      defaultNetworkParams...,
+      defaultTrainingParams...
+    ) 
+  )
+
+push!(dfTraining, (;
+    datasetTraining = (1,2),
+    datasetTrainingWeighting = defaultWeighting,
+    numTrainingData = defaultNumTrainingData,
+    datasetValidation = (1, 2),
+    defaultNetworkParams...,
+    defaultTrainingParams...
+  ) 
+)
+
+
+# Architecture Study 
+networkModes = [8, 16, 24, 32]
+networkWidth = [16, 32, 48, 64]
+
+
+for d1=1:length(networkModes)
+  for d2=1:length(networkWidth)
+    push!(dfTraining, (;
+       datasetTraining = (1,2),
+       datasetTrainingWeighting = (1.0-weights[d], weights[d]),
+       numTrainingData = defaultNumTrainingData,
+       datasetValidation = (1, 2),
+       networkModes = networkModes[d1],
+       networkWidth = networkWidth[d2],
+       defaultTrainingParams...
+      ) 
+    )
+  end
+end
+
+
+
