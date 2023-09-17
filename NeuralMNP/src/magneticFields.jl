@@ -6,6 +6,7 @@ function generateRandomFields(t, Z; fieldType::FieldType,
                                              freqInterval = (20e3, 50e3),
                                              frequencies = nothing,
                                              filterFactor = (4,20),
+                                             numFrequencies = (1,1),
                                              maxField = 30e-3 )
 
   if fieldType == RANDOM_FIELD
@@ -38,15 +39,20 @@ function generateRandomFields(t, Z; fieldType::FieldType,
         end
       end
     end
-  elseif fieldType == HARMONIC_RANDOM_FIELD
+  elseif fieldType == RANDOM_SPARSE_FREQUENCY_FIELD
     B = zeros(Float32, length(t), 3, Z)
+    numFreq = rand(numFrequencies[1]:numFrequencies[2])
     for z=1:Z
       for d in dims
-        γ = rand()
-        f = rand_interval(freqInterval[1], freqInterval[2])
-        offset = rand_interval(-1,1)
-        phase = rand_interval(-π,π)
-        B[:,d,z] = maxField*rand()*(γ*sin.(2*π*f*t.+phase) .+ (1-γ)*offset)
+        for k=1:numFreq
+          γ = rand()
+          f = rand_interval(freqInterval[1], freqInterval[2])
+          offset = rand_interval(-1,1)
+          phase = rand_interval(-π,π)
+          B[:,d,z] .+= (γ*sin.(2*π*f*t.+phase) .+ (1-γ)*offset)
+        end
+        B[:,d,z] ./= maximum(abs.(B[:,d,z]))
+        B[:,d,z] .= maxField*(rand()*B[:,d,z])
       end
     end
   elseif fieldType == HARMONIC_MPI_FIELD
@@ -65,18 +71,43 @@ function generateRandomFields(t, Z; fieldType::FieldType,
 end
 
 function generateRandomParticleParams(params, Z; anisotropyAxis=nothing,
-                                              distribution = :uniform)
+                                              boxing = true, γ=1.0)
   paramsInner = copy(params)
 
-  if haskey(params, :DCore) && typeof(params[:DCore]) <: Tuple
-    paramsInner[:DCore] = rand_interval(params[:DCore][1], params[:DCore][2], Z; distribution) 
-  end
+  if haskey(params, :DCore) && typeof(params[:DCore]) <: Tuple &&
+     haskey(params, :kAnis) && typeof(params[:kAnis]) <: Tuple && boxing
 
-  if haskey(params, :kAnis) && typeof(params[:kAnis]) <: Tuple
+    N = floor(Int, sqrt(Z) / 2 )
+    DGrid = range(0, 1, length=N+1).^(γ).*(params[:DCore][2] - params[:DCore][1]).+params[:DCore][1]
+    KGrid = range(0, 1, length=N+1).^(γ).*(params[:kAnis][2] - params[:kAnis][1]).+params[:kAnis][1]
+    DCore = zeros(Z)
+    KCore = zeros(Z)
+    randidx = shuffle!(collect(1:Z))
+    for z=1:Z
+      idx = CartesianIndices((N,N))[mod1(z, N*N)]
+      DCore[randidx[z]] = rand_interval(DGrid[idx[1]], DGrid[idx[1]+1], 1)[1]
+      KCore[randidx[z]] = rand_interval(KGrid[idx[2]], KGrid[idx[2]+1], 1)[1]
+    end
+
+    paramsInner[:DCore] = DCore
     if anisotropyAxis == nothing
-      paramsInner[:kAnis] = [ rand_interval(params[:kAnis][1], params[:kAnis][2]; distribution)*randAxis() for z=1:Z ]
+      paramsInner[:kAnis] = [ KCore[z]*randAxis() for z=1:Z ]
     else
-      paramsInner[:kAnis] = [ rand_interval(params[:kAnis][1], params[:kAnis][2]; distribution)*anisotropyAxis for z=1:Z ]
+      paramsInner[:kAnis] = [ KCore[z]*anisotropyAxis for z=1:Z ]
+    end
+  else
+    if haskey(params, :DCore) && typeof(params[:DCore]) <: Tuple
+      DGrid = rand_interval(0, 1, Z).^(γ).*(params[:DCore][2] - params[:DCore][1]).+params[:DCore][1]
+      paramsInner[:DCore] = DGrid
+    end
+
+    if haskey(params, :kAnis) && typeof(params[:kAnis]) <: Tuple
+      KGrid = rand_interval(0, 1, Z).^(γ).*(params[:kAnis][2] - params[:kAnis][1]).+params[:kAnis][1]
+      if anisotropyAxis == nothing
+        paramsInner[:kAnis] = [ KGrid[z]*randAxis() for z=1:Z ]
+      else
+        paramsInner[:kAnis] = [ KCore[z]*anisotropyAxis for z=1:Z ]
+      end
     end
   end
   return paramsInner

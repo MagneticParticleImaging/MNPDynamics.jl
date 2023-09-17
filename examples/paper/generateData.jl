@@ -13,17 +13,20 @@ Random.seed!(seed)
 XLong = Any[]
 YLong = Any[]
 
+
 for l=1:size(dfDatasets, 1)
   filenameTrain = joinpath(datadir, dfDatasets.filename[l])
   BTrain = generateRandomFields(tBaseData, dfDatasets.numData[l]; 
                                       fieldType = dfDatasets.fieldType[l], 
                                       dims = dfDatasets.fieldDims[l],
                                       filterFactor = dfDatasets.filterFactor[l],
-                                      maxField = dfDatasets.maxField[l])
+                                      maxField = dfDatasets.maxField[l],
+                                      numFrequencies = dfDatasets.numFrequencies[l])
 
   pTrain = generateRandomParticleParams(p, dfDatasets.numData[l]; 
                                         anisotropyAxis = dfDatasets.anisotropyAxis[l],
-                                        distribution = dfDatasets.samplingDistribution[l])
+                                        boxing = dfDatasets.boxing[l],
+                                        γ = dfDatasets.γ[l])
 
   @time mTrain, BTrain = simulationMNPMultiParams(filenameTrain, BTrain, tBaseData, pTrain; force=forceDataGen)
 
