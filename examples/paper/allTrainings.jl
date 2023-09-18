@@ -11,8 +11,8 @@ include("generateData.jl")
 
 for l=1:size(dfTraining, 1)
   # load training data
-  dsTraining = dfTraining.datasetTraining[l]
-  dsTrainingWeighting = dfTraining.datasetTrainingWeighting[l]
+  dsTraining = collect(dfTraining.datasetTraining[l])
+  dsTrainingWeighting = collect(dfTraining.datasetTrainingWeighting[l])
   numTrainingData = dfTraining.numTrainingData[l]
 
   inputChan = size(XLong[dsTraining[1]], 2)
@@ -38,7 +38,8 @@ for l=1:size(dfTraining, 1)
   validationLoaders = Any[]
   for k = 1:length(dsValidation)
     R = (p[:numBaseTrainingData]+1):(p[:numBaseTrainingData]+p[:numBaseValidationData])
-    XVal, YVal = generateSnippets([XLong[dsValidation[k]][:,:,R]], [YLong[dsValidation[k]][:,:,R]], 
+    XVal, YVal = generateSnippets([XLong[dsValidation[k]][:,:,R]], 
+                                  [YLong[dsValidation[k]][:,:,R]], 
                       p[:numValidationData], [1.0], p[:snippetLength])
     XVal .= NeuralMNP.trafo(XVal, nX)
     YVal .= NeuralMNP.trafo(YVal, nY)
@@ -66,7 +67,7 @@ for l=1:size(dfTraining, 1)
 
   NOModel = NeuralMNP.NeuralNetwork(model, nX, nY, p, p[:snippetLength])
 
-  filenameModel = joinpath(modeldir, "model.bin")
+  filenameModel = joinpath(modeldir, "model$(l).bin")
   serialize(filenameModel, NOModel);
 end
 

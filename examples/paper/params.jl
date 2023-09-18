@@ -38,11 +38,12 @@ modeldir = "./models"
 
 mkpath(datadir)
 mkpath(imgdir)
+mkpath(modeldir)
 
 forceDataGen = false
 seed = 2
 
-#=numDatasets = 4
+numDatasets = 4
 dfDatasets = DataFrame(samplingDistribution = [:chi, :chi, :uniform, :uniform],
                        fieldDims = [1:3, 1, 1:3, 1],
                        anisotropyAxis = [nothing, [1,0,0], nothing, [1,0,0]],
@@ -50,9 +51,9 @@ dfDatasets = DataFrame(samplingDistribution = [:chi, :chi, :uniform, :uniform],
                        filterFactor = repeat([(17,24)], numDatasets),
                        maxField = repeat([0.03], numDatasets),
                        numData = repeat([p[:numBaseData]], numDatasets),
-                       filename = ["trainData$(i).h5" for i=1:numDatasets])=#
+                       filename = ["trainData$(i).h5" for i=1:numDatasets])
 
-numDatasets = 2
+#=numDatasets = 2
 dfDatasets = DataFrame(samplingDistribution = [:chi, :chi],
                       fieldDims = [1:3, 1],
                       anisotropyAxis = [nothing, [1,0,0]],
@@ -60,7 +61,7 @@ dfDatasets = DataFrame(samplingDistribution = [:chi, :chi],
                       filterFactor = repeat([(10,20)], numDatasets),
                       maxField = repeat([0.03], numDatasets),
                       numData = repeat([p[:numBaseData]], numDatasets),
-                      filename = ["trainData$(i).h5" for i=1:numDatasets])
+                      filename = ["trainData$(i).h5" for i=1:numDatasets])=#
 
 
 
@@ -84,12 +85,12 @@ defaultTrainingParams = (
 
 defaultWeighting = (0.9, 0.1)
 
-defaultNumTrainingData = p[:numTrainingData]
+defaultNumTrainingData = 40000 #p[:numTrainingData]
 
 ### Study 1: Compare distributions for fixed
 
 # Weighting Study 
-weights = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
+weights = [0.0, 0.1, 0.2, 0.3]
 
 for d=1:length(weights)
   push!(dfTraining, (;
@@ -119,7 +120,6 @@ for d=1:length(numData)
 end
 
 
-
 # Sampling Study
 push!(dfTraining, (;
       datasetTraining = (1,2),
@@ -132,7 +132,7 @@ push!(dfTraining, (;
   )
 
 push!(dfTraining, (;
-    datasetTraining = (1,2),
+    datasetTraining = (3,4),
     datasetTrainingWeighting = defaultWeighting,
     numTrainingData = defaultNumTrainingData,
     datasetValidation = (1, 2),
@@ -151,7 +151,7 @@ for d1=1:length(networkModes)
   for d2=1:length(networkWidth)
     push!(dfTraining, (;
        datasetTraining = (1,2),
-       datasetTrainingWeighting = (1.0-weights[d], weights[d]),
+       datasetTrainingWeighting = defaultWeighting,
        numTrainingData = defaultNumTrainingData,
        datasetValidation = (1, 2),
        networkModes = networkModes[d1],
