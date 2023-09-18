@@ -43,29 +43,93 @@ mkpath(modeldir)
 forceDataGen = false
 seed = 2
 
-numDatasets = 4
-dfDatasets = DataFrame(samplingDistribution = [:chi, :chi, :uniform, :uniform],
-                       fieldDims = [1:3, 1, 1:3, 1],
-                       anisotropyAxis = [nothing, [1,0,0], nothing, [1,0,0]],
-                       fieldType = repeat([RANDOM_FIELD], numDatasets),
-                       filterFactor = repeat([(17,24)], numDatasets),
-                       maxField = repeat([0.03], numDatasets),
-                       numData = repeat([p[:numBaseData]], numDatasets),
-                       filename = ["trainData$(i).h5" for i=1:numDatasets])
 
-#=numDatasets = 2
-dfDatasets = DataFrame(samplingDistribution = [:chi, :chi],
-                      fieldDims = [1:3, 1],
-                      anisotropyAxis = [nothing, [1,0,0]],
-                      fieldType = repeat([RANDOM_FIELD], numDatasets),
-                      filterFactor = repeat([(10,20)], numDatasets),
-                      maxField = repeat([0.03], numDatasets),
-                      numData = repeat([p[:numBaseData]], numDatasets),
-                      filename = ["trainData$(i).h5" for i=1:numDatasets])=#
+dfDatasets = DataFrame()
 
+defaultDatasetParams = (
+  maxField = 0.04,
+  numData = p[:numBaseData]
+)
 
+# Particle distribution study
+γs = [1.0, 0.8, 0.6, 0.4]
 
+n_ = 1
 
+push!(dfDatasets, (;
+  fieldType = RANDOM_FIELD,
+  numFrequencies = (1,1),
+  fieldDims = 1:3,
+  filterFactor = (10,20),
+  γ = 1.0,
+  boxing = false,
+  anisotropyAxis = nothing,
+  filename = "trainData$(n).h5",
+  defaultDatasetParams...
+  ) 
+)
+n += 1
+
+for l=1:length(γs)
+  push!(dfDatasets, (;
+       fieldType = RANDOM_FIELD,
+       numFrequencies = (1,1),
+       fieldDims = 1:3,
+       filterFactor = (10,20),
+       γ = γs[l],
+       boxing = true,
+       anisotropyAxis = nothing,
+       filename = "trainData$(n).h5",
+       defaultDatasetParams...
+      ) 
+    )
+    global n += 1
+end
+
+# Field distribution study
+
+push!(dfDatasets, (;
+  fieldType = RANDOM_SPARSE_FREQUENCY_FIELD,
+  numFrequencies = (1,1),
+  fieldDims = 1:3,
+  filterFactor = (10,20),
+  γ = 1.0,
+  boxing = true,
+  anisotropyAxis = nothing,
+  filename = "trainData$(n).h5",
+  defaultDatasetParams...
+  ) 
+)
+n += 1
+
+push!(dfDatasets, (;
+  fieldType = RANDOM_SPARSE_FREQUENCY_FIELD,
+  numFrequencies = (5,10),
+  fieldDims = 1:3,
+  filterFactor = (10,20),
+  γ = 1.0,
+  boxing = true,
+  anisotropyAxis = [1,0,0],
+  filename = "trainData$(n).h5",
+  defaultDatasetParams...
+  ); promote=true
+)
+n += 1
+
+# Field direction study
+push!(dfDatasets, (;
+  fieldType = RANDOM_FIELD,
+  numFrequencies = (1,1),
+  fieldDims = 1:1,
+  filterFactor = (10,20),
+  γ = 1.0,
+  boxing = true,
+  anisotropyAxis = nothing,
+  filename = "trainData$(n).h5",
+  defaultDatasetParams...
+  ) 
+)
+n += 1
 
 dfTraining = DataFrame()
 

@@ -4,7 +4,9 @@ using CairoMakie
 using Flux, NeuralOperators
 using DataFrames
 
-filenameModel = "model.bin"
+#filenameModel = "model.bin"
+filenameModel = "models/model19.bin"
+
 NOModel = deserialize(filenameModel)
 include("params.jl")
 include("utils.jl")
