@@ -77,16 +77,30 @@ function generateRandomParticleParams(params, Z; anisotropyAxis=nothing,
   if haskey(params, :DCore) && typeof(params[:DCore]) <: Tuple &&
      haskey(params, :kAnis) && typeof(params[:kAnis]) <: Tuple && boxing
 
-    N = floor(Int, sqrt(Z) / 2 )
-    DGrid = range(0, 1, length=N+1).^(γ).*(params[:DCore][2] - params[:DCore][1]).+params[:DCore][1]
-    KGrid = range(0, 1, length=N+1).^(γ).*(params[:kAnis][2] - params[:kAnis][1]).+params[:kAnis][1]
     DCore = zeros(Z)
     KCore = zeros(Z)
-    randidx = shuffle!(collect(1:Z))
-    for z=1:Z
-      idx = CartesianIndices((N,N))[mod1(z, N*N)]
-      DCore[randidx[z]] = rand_interval(DGrid[idx[1]], DGrid[idx[1]+1], 1)[1]
-      KCore[randidx[z]] = rand_interval(KGrid[idx[2]], KGrid[idx[2]+1], 1)[1]
+
+    N = 2 
+    z = 1
+
+    while z <= Z
+      
+      DGrid = range(0, 1, length=N+1).^(γ).*(params[:DCore][2] - params[:DCore][1]).+params[:DCore][1]
+      KGrid = range(0, 1, length=N+1).^(γ).*(params[:kAnis][2] - params[:kAnis][1]).+params[:kAnis][1]
+      indices = CartesianIndices((N,N))
+      randidx = shuffle!(collect(1:N*N))
+      for q = 1:length(randidx)
+        idx = indices[randidx[q]]
+        ΔDGrid =  DGrid[idx[1]+1] - DGrid[idx[1]]
+        ΔKGrid =  KGrid[idx[2]+1] - KGrid[idx[2]]
+        DCore[z] = rand_interval(DGrid[idx[1]], DGrid[idx[1]+1], 1)[1]
+        KCore[z] = rand_interval(KGrid[idx[2]], KGrid[idx[2]+1], 1)[1]
+        z += 1
+        if z > Z
+          break
+        end
+      end
+      N *= 2
     end
 
     paramsInner[:DCore] = DCore
