@@ -44,7 +44,7 @@ include("sparseMatrixSetup.jl")
 include("simulation.jl")
 include("multiParams.jl")
 
-export simulationMNP, simulationMNPMultiParams
+export simulationMNP, simulationMNPMultiParams, loadSimulationMNPMultiParams
 
 
 end # module

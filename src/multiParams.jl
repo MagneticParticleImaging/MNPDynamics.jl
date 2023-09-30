@@ -117,14 +117,23 @@ function simulationMNPMultiParams(filename::AbstractString, B::Array{T,3}, t, pa
               [params[:kAnis][z][d] for d=1:3, z=1:length(params[:kAnis])]  : params[:kAnis]
     end
   else
-    m, B = h5open(filename,"r") do h5
-      m = read(h5["magneticMoments"])
-      B = read(h5["B"])
-      params[:DCore] = read(h5["DCore"])
-      kAnis_ = read(h5["kAnis"])
-      params[:kAnis] = [ collect(kAnis_[:,z]) for z=1:size(kAnis_, 2) ]
-      (m, B)
-    end
+    m, B, DCore, kAnis = loadSimulationMNPMultiParams(filename) 
+    params[:DCore] = DCore
+    params[:kAnis] = kAnis
   end
   return m, B
+end
+
+function loadSimulationMNPMultiParams(filename::AbstractString) 
+
+  m, B, DCore, kAnis = h5open(filename,"r") do h5
+    m = read(h5["magneticMoments"])
+    B = read(h5["B"])
+    DCore = read(h5["DCore"])
+    kAnis_ = read(h5["kAnis"])
+    kAnis = [ collect(kAnis_[:,z]) for z=1:size(kAnis_, 2) ]
+    (m, B, DCore, kAnis)
+  end
+
+  return m, B, DCore, kAnis
 end
