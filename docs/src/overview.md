@@ -113,6 +113,13 @@ p[:relaxation] = BROWN    # relaxation mode
 !!! note
     Currently it is not possible to simulate Brownian and Neel relaxation simultaneously.
 
+## Hysteresis Loops
+
+The following example shows hysteresis loops for different excitation amplitudes and Brownian and Neel relaxation.
+
+![Hysteresis](./assets/hysteresis.svg)
+
+
 ## Multiple Parameters
 
 Quite often, the goal is to to perform multiple simulations. Since this can get quite time

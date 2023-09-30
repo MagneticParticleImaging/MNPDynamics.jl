@@ -9,7 +9,7 @@ tmp
 *.h5
 *.bson
 *.pdf
-*.svg
+#*.svg
 *.bin
 *.png
 
