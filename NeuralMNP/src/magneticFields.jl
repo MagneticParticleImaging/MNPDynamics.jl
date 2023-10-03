@@ -154,8 +154,8 @@ end
 
 function  bandPassFilter(N, samplingRate, freqInterval)
   # indices of the bandpass
-  x0 = Int64( (N*freqInterval[1] )÷f_samp+1 )
-  x1 = Int64( (N*freqInterval[2] )÷f_samp+1 )
+  x0 = Int64( (N*freqInterval[1] )÷samplingRate+1 )
+  x1 = Int64( (N*freqInterval[2] )÷samplingRate+1 )
   #filter
   filt = zeros(Int64, N)
   filt[x0:x1] .= 1
