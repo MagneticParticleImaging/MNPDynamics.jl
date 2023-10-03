@@ -23,15 +23,14 @@ function generateRandomFields(t, Z; fieldType::FieldType,
         end
       end
     end
-  elseif fieldType == LOWPASS_RANDOM_FIELD
+  elseif fieldType == BANDPASS_RANDOM_FIELD
     B = rand_interval(-1, 1, length(t), 3, Z)
     samplingRate = 1/(t[2]-t[1])
     for z=1:Z
       for d=1:3
         if d ∈ dims
-          f_thresh = rand_interval(freqInterval[1], freqInterval[2])
-          filter = lowPassFilter(length(t), samplingRate, f_thresh)
-          B[:,d,z] = real.( filterSignal(B[:,d,z], filter) )
+          filter = bandPassFilter(length(t)÷2+1, samplingRate, freqInterval)
+          B[:,d,z] =  irfft( rfft(B[:,d,z], 1) .* filter, length(t), 1) 
           B[:,d,z] ./= maximum(abs.(B[:,d,z]))
           B[:,d,z] .= maxField*(rand()*B[:,d,z])
         else
@@ -153,12 +152,10 @@ function combineFields(fields, params; shuffle=true)
   B, param
 end
 
-# low pass filter
-function lowPassFilter(N, f_samp, f_thresh)
-  # indices of low frequencies
-  centerIdx = N÷2 + 1
-  x0 = Int64( centerIdx-(N*f_thresh)÷f_samp )
-  x1 = Int64( centerIdx+(N*f_thresh)÷f_samp )
+function  bandPassFilter(N, samplingRate, freqInterval)
+  # indices of the bandpass
+  x0 = Int64( (N*freqInterval[1] )÷f_samp+1 )
+  x1 = Int64( (N*freqInterval[2] )÷f_samp+1 )
   #filter
   filt = zeros(Int64, N)
   filt[x0:x1] .= 1
@@ -166,10 +163,6 @@ function lowPassFilter(N, f_samp, f_thresh)
   return filt
 end
 
-# apply frequency filter to signal
-function filterSignal(x, filt)
-  return ifft( ifftshift(filt) .* fft( x, 1) )
-end
 
 function generateSnippets(Xs, Ys, numData, weights, snippetLength)
   weights = collect(weights)

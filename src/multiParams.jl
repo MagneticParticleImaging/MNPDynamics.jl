@@ -40,7 +40,7 @@ function simulationMNPMultiParams(B::G, t, params::Vector{P}; kargs...) where {G
       delete!(kargsInner, :DCore)
     end
     if haskey(kargs, :kAnis) && typeof(kargs[:kAnis]) <: AbstractVector &&
-                      ( eltype(kargs[:kAnis]) <: AbstractVector ||     eltype(kargs[:kAnis]) <: Tuple )
+                      ( eltype(kargs[:kAnis]) <: AbstractVector || eltype(kargs[:kAnis]) <: Tuple )
       delete!(kargsInner, :kAnis)
     end
 

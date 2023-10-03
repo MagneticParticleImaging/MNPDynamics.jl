@@ -88,7 +88,9 @@ function loss(model, x::AbstractArray, y::AbstractArray, normalization::Normaliz
   ŷ = back(model(x), normalization.mean, normalization.std)  
   y = back(y, normalization.mean, normalization.std)
 
-  return mean( norm_l2(ŷ.-y, dims=[1,2]) ./ norm_l2(y, dims=[1,2]) )
+
+  #return mean( norm_l2(ŷ.-y, dims=[1,2]) ./ norm_l2(y, dims=[1,2]) )
+  return mean( norm_l2(ŷ.-y, dims=[1,2]) ./ maximum(abs.(y), dims=[1,2]) ./ sqrt(size(y,1)*size(y,2)) )
 end
 
 function loss(model, loader::DataLoader, normalization::NormalizationParams, device=cpu)
@@ -109,11 +111,16 @@ end
 
 function train(model, opt, trainLoader, testLoaders, normalization::NormalizationParams; 
                epochs::Integer=10, γ::Float32=0f0, stepSize::Integer=0, plotStep=1,
-               logging::Bool = false, plotting=false, device=cpu)
+               logging::Bool = false, plotting=false, device=cpu, preloadToDevice=true)
 
   model = model |> device
   normalization = normalization |> device
   opt_state = Flux.setup(opt, model)
+
+  if preloadToDevice
+    trainLoader = trainLoader |> device
+    testLoaders = [ t |> device for t in testLoaders]  
+  end
                
   trainLoss = Float32(0.0)
 
@@ -141,8 +148,8 @@ function train(model, opt, trainLoader, testLoaders, normalization::Normalizatio
 		trainLoss = Float32(0.0)
 
     t_ = @elapsed begin
-    # @showprogress "Epoch $epoch" for (x,y) in trainLoader
-    for (x,y) in trainLoader
+      # @showprogress "Epoch $epoch" for (x,y) in trainLoader
+      for (x,y) in trainLoader
 
         loss_, gs = Flux.withgradient(model) do m
           loss(m, x |> device, y |> device, normalization)
