@@ -39,7 +39,7 @@ function plotExampleSignals(model, kAnis=1100, offset=[0,0,0])
     @time y = simulationMNP(B, t; p...)
     pNO = copy(p)
     pNO[:neuralNetwork] = model
-    pNO[:alg] = NeuralNetworkMNP
+    pNO[:model] = NeuralOperatorModel()
     yNO = simulationMNP(B, t; pNO...)
 
     plot!(pl1, t[:], y[:,1], lw=2, c=d, label="D=$(DCore[d]) nm true", legend = :outertopright)
@@ -59,7 +59,7 @@ function plotExampleSignals(model, kAnis=1100, offset=[0,0,0])
     @time y = simulationMNP(B, t; p...)
     pNO = copy(p)
     pNO[:neuralNetwork] = model
-    pNO[:alg] = NeuralNetworkMNP
+    pNO[:model] = NeuralOperatorModel()
     yNO = simulationMNP(B, t; pNO...)
 
     plot!(pl2, t[:], y[:,1], lw=2, c=k, label="kAnis=$(kAnis[k])  true", legend = :outertopright)
@@ -80,7 +80,7 @@ function plotExampleSignals(model, kAnis=1100, offset=[0,0,0])
     @time y = simulationMNP(B, t; p...)
     pNO = copy(p)
     pNO[:neuralNetwork] = model
-    pNO[:alg] = NeuralNetworkMNP
+    pNO[:model] = NeuralOperatorModel()
     yNO = simulationMNP(B, t; pNO...)
 
     plot!(pl3, t[:], y[:,1], lw=2, c=k, label="off=$(off[k]) mT  true", legend = :outertopright)

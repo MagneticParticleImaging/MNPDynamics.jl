@@ -62,7 +62,7 @@ function plotExampleSignals(model)
     pNO = copy(p)
 
     pNO[:neuralNetwork] = model
-    pNO[:alg] = NeuralNetworkMNP
+    pNO[:model] = NeuralOperatorModel()
     yNO = simulationMNP(B, t; pNO...)
 
     CairoMakie.lines!(ax1, t[:], y[:,1]/1e6, 
@@ -87,7 +87,7 @@ function plotExampleSignals(model)
     @time y = simulationMNP(B, t; p...)
     pNO = copy(p)
     pNO[:neuralNetwork] = model
-    pNO[:alg] = NeuralNetworkMNP
+    pNO[:model] = NeuralOperatorModel()
     yNO = simulationMNP(B, t; pNO...)
 
     CairoMakie.lines!(ax2, t[:], y[:,1]/1e6, 
@@ -111,7 +111,7 @@ function plotExampleSignals(model)
     @time y = simulationMNP(B, t; p...)
     pNO = copy(p)
     pNO[:neuralNetwork] = model
-    pNO[:alg] = NeuralNetworkMNP
+    pNO[:model] = NeuralOperatorModel()
     yNO = simulationMNP(B, t; pNO...)
 
     CairoMakie.lines!(ax3, t[:], y[:,1]/1e6, 
@@ -135,7 +135,7 @@ function plotExampleSignals(model)
     @time y = simulationMNP(B, t; p...)
     pNO = copy(p)
     pNO[:neuralNetwork] = model
-    pNO[:alg] = NeuralNetworkMNP
+    pNO[:model] = NeuralOperatorModel()
     yNO = simulationMNP(B, t; pNO...)
 
     CairoMakie.lines!(ax4, t[:], y[:,1]/1e6, 
@@ -158,7 +158,7 @@ function plotExampleSignals(model)
     @time y = simulationMNP(B, t; p...)
     pNO = copy(p)
     pNO[:neuralNetwork] = model
-    pNO[:alg] = NeuralNetworkMNP
+    pNO[:model] = NeuralOperatorModel()
     yNO = simulationMNP(B, t; pNO...)
 
     CairoMakie.lines!(ax5, t[:], y[:,1]/1e6, 

@@ -24,9 +24,10 @@ t = range(0,stop=tMax,length=tLength);
 # Magnetic field for simulation 
 B =  t -> (0.012*[sin(2*pi*fx*t), 0*t, 0*t]);
 
-p[:relaxation] = NO_RELAXATION
+p[:model] = EquilibriumModel()
 yLangevin = simulationMNP(B, t; p...)
 
+p[:model] = FokkerPlanckModel()
 p[:relaxation] = NEEL
 yNeel = simulationMNP(B, t; p...)
 

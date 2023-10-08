@@ -18,18 +18,17 @@ using ProgressMeter
 
 using HDF5
 
+using FLoops
 
 ## sorting algorithms ##
 
-abstract type MNPAlgorithm end
+abstract type AbstractMNPModel end
 
-struct FokkerPlanckAlg <: MNPAlgorithm end
-struct LangevinFunctionAlg <: MNPAlgorithm end
+struct FokkerPlanckModel <: AbstractMNPModel end
+struct EquilibriumModel <: AbstractMNPModel end
+struct EquilibriumAnisModel <: AbstractMNPModel end
 
-const FokkerPlanck = FokkerPlanckAlg()
-const LangevinFunction = LangevinFunctionAlg()
-
-export MNPAlgorithm, FokkerPlanck, LangevinFunction
+export AbstractMNPModel, FokkerPlanckModel, EquilibriumModel, EquilibriumAnisModel
 
 @enum RelaxationType begin
   NEEL
@@ -39,8 +38,13 @@ end
 
 export NEEL, BROWN, NO_RELAXATION
 
+export EnsembleThreads, EnsembleDistributed, EnsembleSerial
+
 include("utils.jl")
 include("sparseMatrixSetup.jl")
+include("fokkerPlanck.jl")
+include("equilibrium.jl")
+include("equilibriumAnis.jl")
 include("simulation.jl")
 include("multiParams.jl")
 

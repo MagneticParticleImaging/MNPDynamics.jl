@@ -16,8 +16,8 @@ function make_neural_operator_model(inputChan, outputChan, modes, width, transfo
     OperatorKernel(width=>width, (modes, ), transform, gelu, permuted=permuted),
     OperatorKernel(width=>width, (modes, ), transform, permuted=permuted),
     # project back to the scalar field of interest space
-    permuted ? Conv((1,), width=>128, gelu) : Dense(width, 128, gelu),
-    permuted ? Conv((1,), 128=>outputChan) : Dense(128, outputChan),
+    permuted ? Conv((1,), width=>width, gelu) : Dense(width, width, gelu),
+    permuted ? Conv((1,), width=>outputChan) : Dense(width, outputChan),
   )
 end
 
@@ -33,8 +33,8 @@ function make_unet_neural_operator_model(inputChan, outputChan, modes, width, tr
     OperatorUNOKernel(width=>width, (modes, ), transform, gelu, permuted=permuted),
     OperatorUNOKernel(width=>width, (modes, ), transform, permuted=permuted),
     # project back to the scalar field of interest space
-    permuted ? Conv((1,), width=>128, gelu) : Dense(width, 128, gelu),
-    permuted ? Conv((1,), 128=>outputChan) : Dense(128, outputChan),
+    permuted ? Conv((1,), width=>width, gelu) : Dense(width, width, gelu),
+    permuted ? Conv((1,), width=>outputChan) : Dense(width, outputChan),
   )
 end
 
@@ -378,7 +378,7 @@ function applyToArbitrarySignal(neuralNetwork::NeuralNetwork, X, snippetLength; 
 end
 
 
-function MNPDynamics.simulationMNP(B::g, t, ::NeuralNetworkMNPAlg;
+function MNPDynamics.simulationMNP(B::g, t, ::NeuralOperatorModel;
                        neuralNetwork::NeuralNetwork,
                        kargs...
                        ) where g

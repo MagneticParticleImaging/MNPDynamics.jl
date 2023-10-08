@@ -1,82 +1,131 @@
 
+abstract type AbstractEnsembleAlgorithm end
+
+struct EnsembleThreads <: AbstractEnsembleAlgorithm end
+struct EnsembleDistributed <: AbstractEnsembleAlgorithm end
+struct EnsembleSerial <: AbstractEnsembleAlgorithm end
+
 """
   simulationMNPMultiParams(B, t, params; kargs...) 
 """
 function simulationMNPMultiParams(B::G, t, params::Vector{P}; kargs...) where {G,P}
+  ensembleAlg = get(kargs, :ensembleAlg, EnsembleThreads())
+  return simulationMNPMultiParams(B, t, params, ensembleAlg; kargs...)
+end
+
+
+function simulationMNPMultiParams(B::G, t, params::Vector{P}, ::EnsembleSerial; kargs...) where {G,P}
   M = length(params)
-  if haskey(kargs, :neuralNetwork)
+  magneticMoments = zeros(Float32, length(t), 3, M)
 
-    magneticMoments = zeros(Float32, length(t), 3, M)
+  kargsInner = copy(kargs)
 
-    kargsInner = copy(kargs)
+  @showprogress for m=1:M
+    B_ = t -> ( B(t, params[m]) )
 
-    @showprogress for m=1:M
-      B_ = t -> ( B(t, params[m]) )
+    # this can be extended to more parameters
+    if haskey(kargs, :kAnis) && typeof(kargs[:kAnis]) <: AbstractVector &&
+            ( eltype(kargs[:kAnis]) <: AbstractVector || eltype(kargs[:kAnis]) <: Tuple )
+      kargsInner[:kAnis] = kargs[:kAnis][m]
+    end
+
+    if haskey(kargs, :DCore) && typeof(kargs[:DCore]) <: AbstractArray
+      kargsInner[:DCore] = kargs[:DCore][m]
+    end
+
+    y = simulationMNP(B_, t; kargsInner...)
+    magneticMoments[:,:,m] .= y
+
+  end
+
+  return magneticMoments
+end
+
+function simulationMNPMultiParams(B::G, t, params::Vector{P}, ::EnsembleThreads; kargs...) where {G,P}
+  M = length(params)
+  magneticMoments = zeros(Float32, length(t), 3, M)
+  numThreadsBLAS = BLAS.get_num_threads()
+
+  kargsInner = copy(kargs)
+  if haskey(kargs, :DCore) && typeof(kargs[:DCore]) <: AbstractArray
+    delete!(kargsInner, :DCore)
+  end
+  if haskey(kargs, :kAnis) && typeof(kargs[:kAnis]) <: AbstractVector &&
+                    ( eltype(kargs[:kAnis]) <: AbstractVector || eltype(kargs[:kAnis]) <: Tuple )
+    delete!(kargsInner, :kAnis)
+  end
+
+  prog = Progress(M; dt=0.5)
+
+  BLAS.set_num_threads(1)
+
+  @floop for m=1:M
+    let p=params[m], kargsInner_=copy(kargsInner)
+      B_ = t -> ( B(t, p) )
 
       # this can be extended to more parameters
       if haskey(kargs, :kAnis) && typeof(kargs[:kAnis]) <: AbstractVector &&
               ( eltype(kargs[:kAnis]) <: AbstractVector || eltype(kargs[:kAnis]) <: Tuple )
-        kargsInner[:kAnis] = kargs[:kAnis][m]
+        kargsInner_[:kAnis] = kargs[:kAnis][m]
       end
 
       if haskey(kargs, :DCore) && typeof(kargs[:DCore]) <: AbstractArray
-        kargsInner[:DCore] = kargs[:DCore][m]
+        kargsInner_[:DCore] = kargs[:DCore][m]
       end
 
-      y = simulationMNP(B_, t, kargs[:alg]; kargsInner...)
+      y = simulationMNP(B_, t; kargsInner_...)
       magneticMoments[:,:,m] .= y
-
-      #params[:kAnis] = anisotropyAxis[z]
-      #sm[:,:,z] .= simulationMNP(t -> BSM(t, offsets[z]), tSM, NeuralNetworkMNP; device, params...)
     end
-  
-    return magneticMoments
-  else
-    numThreadsBLAS = BLAS.get_num_threads()
-
-    magneticMoments = SharedArray{Float64}(length(t), 3, M)
-    kargsInner = copy(kargs)
-    if haskey(kargs, :DCore) && typeof(kargs[:DCore]) <: AbstractArray
-      delete!(kargsInner, :DCore)
-    end
-    if haskey(kargs, :kAnis) && typeof(kargs[:kAnis]) <: AbstractVector &&
-                      ( eltype(kargs[:kAnis]) <: AbstractVector || eltype(kargs[:kAnis]) <: Tuple )
-      delete!(kargsInner, :kAnis)
-    end
-
-    #prog = Progress(M, 1, "Simulation")
-    #try
-      BLAS.set_num_threads(1)
-
-      #for m=1:M
-      #Threads.@threads for m=1:M
-      @sync @showprogress @distributed for m=1:M
-        let p=params[m], kargsInner=copy(kargsInner)
-          B_ = t -> ( B(t, p) )
-
-          # this can be extended to more parameters
-          if haskey(kargs, :kAnis) && typeof(kargs[:kAnis]) <: AbstractVector &&
-                  ( eltype(kargs[:kAnis]) <: AbstractVector || eltype(kargs[:kAnis]) <: Tuple )
-            kargsInner[:kAnis] = kargs[:kAnis][m]
-          end
-
-          if haskey(kargs, :DCore) && typeof(kargs[:DCore]) <: AbstractArray
-            kargsInner[:DCore] = kargs[:DCore][m]
-          end
-
-          y = simulationMNP(B_, t; kargsInner...)
-          magneticMoments[:,:,m] .= y
-          GC.gc()
-        end
-        #next!(prog)
-      end
-    #finally
-      BLAS.set_num_threads(numThreadsBLAS)
-    #end
-
-    return Array(magneticMoments)
+    next!(prog)
   end
+  BLAS.set_num_threads(numThreadsBLAS)
+
+  finish!(prog)
+  return magneticMoments
 end
+
+
+function simulationMNPMultiParams(B::G, t, params::Vector{P}, ::EnsembleDistributed; kargs...) where {G,P}
+  M = length(params)
+  magneticMoments = SharedArray{Float32}(length(t), 3, M)
+  numThreadsBLAS = BLAS.get_num_threads()
+
+  kargsInner = copy(kargs)
+  if haskey(kargs, :DCore) && typeof(kargs[:DCore]) <: AbstractArray
+    delete!(kargsInner, :DCore)
+  end
+  if haskey(kargs, :kAnis) && typeof(kargs[:kAnis]) <: AbstractVector &&
+                    ( eltype(kargs[:kAnis]) <: AbstractVector || eltype(kargs[:kAnis]) <: Tuple )
+    delete!(kargsInner, :kAnis)
+  end
+
+  prog = Progress(M; dt=0.5)
+
+  BLAS.set_num_threads(1)
+
+  @sync @showprogress @distributed for m=1:M
+    let p=params[m], kargsInner_=copy(kargsInner)
+      B_ = t -> ( B(t, p) )
+
+      # this can be extended to more parameters
+      if haskey(kargs, :kAnis) && typeof(kargs[:kAnis]) <: AbstractVector &&
+              ( eltype(kargs[:kAnis]) <: AbstractVector || eltype(kargs[:kAnis]) <: Tuple )
+        kargsInner_[:kAnis] = kargs[:kAnis][m]
+      end
+
+      if haskey(kargs, :DCore) && typeof(kargs[:DCore]) <: AbstractArray
+        kargsInner_[:DCore] = kargs[:DCore][m]
+      end
+
+      y = simulationMNP(B_, t; kargsInner_...)
+      magneticMoments[:,:,m] .= y
+    end
+  end
+  BLAS.set_num_threads(numThreadsBLAS)
+
+  return Array(magneticMoments)
+end
+
 
 
 """

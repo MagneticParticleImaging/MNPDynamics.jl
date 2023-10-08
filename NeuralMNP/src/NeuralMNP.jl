@@ -17,10 +17,9 @@ using Plots
 
 using ImageFiltering
 
-struct NeuralNetworkMNPAlg <: MNPAlgorithm end
-const NeuralNetworkMNP = NeuralNetworkMNPAlg()
+struct NeuralOperatorModel <: AbstractMNPModel end
 
-export NeuralNetworkMNP
+export NeuralOperatorModel
 
 @enum FieldType begin
   RANDOM_FIELD

@@ -25,7 +25,7 @@ function calcSMs(p; device=cpu)
   @time sm[:Immobilized45FNO] = calcSM(p; device)
 
   delete!(p, :neuralNetwork)
-  delete!(p, :alg)
+  delete!(p, :model)
 
   p[:anisotropyAxis] = nothing
   @time sm[:FluidFokkerPlanck] = calcSM(p; device)
@@ -46,7 +46,7 @@ pSM[:DCore] = 20e-9        # particle diameter in nm
 pSM[:kAnis] = 1250         # anisotropy constant
 pSM[:derivative] = false
 pSM[:neuralNetwork] = NOModel
-pSM[:alg] = NeuralNetworkMNP
+pSM[:model] = NeuralOperatorModel()
 N = 30
 pSM[:nOffsets] = (N, N, 1)
 pSM[:maxField] = 0.012
