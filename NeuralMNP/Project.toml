@@ -4,6 +4,7 @@ authors = ["Tobias Knopp <tobias@knoppweb.de>, Hannes Albers, Tobias Kluth"]
 version = "0.1.0"
 
 [deps]
+CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 MNPDynamics = "f81e04c9-20b8-526d-9626-780ee78293fb"
 ImageFiltering = "6a3955dd-da59-5b1f-98d4-e7296123deb5"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"

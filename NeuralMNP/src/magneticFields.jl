@@ -44,13 +44,14 @@ function generateRandomFields(t, Z; fieldType::FieldType,
     for z=1:Z
       for d in dims
         for k=1:numFreq
-          γ = rand()
           f = rand_interval(freqInterval[1], freqInterval[2])
-          offset = rand_interval(-1,1)
           phase = rand_interval(-π,π)
-          B[:,d,z] .+= (γ*sin.(2*π*f*t.+phase) .+ (1-γ)*offset)
+          B[:,d,z] .+= rand()*sin.(2*π*f*t.+phase)
         end
         B[:,d,z] ./= maximum(abs.(B[:,d,z]))
+        γ = rand()
+        offset = rand_interval(-1,1)
+        B[:,d,z] .= (γ*B[:,d,z] .+ (1-γ)*offset)
         B[:,d,z] .= maxField*(rand()*B[:,d,z])
       end
     end

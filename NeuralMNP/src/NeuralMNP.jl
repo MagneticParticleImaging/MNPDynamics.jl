@@ -13,7 +13,8 @@ using FFTW
 
 using TensorBoardLogger, Logging
 
-using Plots
+#using Plots
+using CairoMakie
 
 using ImageFiltering
 

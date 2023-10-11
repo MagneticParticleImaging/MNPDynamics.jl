@@ -176,19 +176,39 @@ function train(model, opt, trainLoader, testLoaders, normalization::Normalizatio
       train_x, train_y = first(trainLoader)
       train_y_true = sqrt.(sum(abs.(back(train_y |> device, normalization)).^2, dims=2)) |> cpu
       train_y_pred = sqrt.(sum(abs.(back(model(train_x |> device), normalization)).^2, dims=2)) |> cpu
-      p = Any[]
-      p_ = plot(train_y_true[:,1,1],label="true"); plot!(p_,train_y_pred[:,1,1], label="predict", title="train")
-      push!(p, p_)
+      #p = Any[]
+
+      fig = Figure( resolution = (1000, 550), figure_padding = 1 )
+
+      #p_ = plot(train_y_true[:,1,1],label="true"); plot!(p_,train_y_pred[:,1,1], label="predict", title="train")
+      #push!(p, p_)
+
+      ax = CairoMakie.Axis(fig[1, 1], # yscale = log10,
+              # xlabel=L"f / \text{kHz}",
+              #ylabel = "Row Energy",
+              title = "train")
+
+      lines!(ax, train_y_true[:,1,1], label="true"); 
+      lines!(ax, train_y_pred[:,1,1], label="predict")
+      axislegend(ax)
+
 
       for (i,testLoader) in enumerate(testLoaders)
         test_x, test_y = first(testLoader)
         test_y_true = sqrt.(sum(abs.(back(test_y |> device, normalization)).^2, dims=2)) |> cpu
         test_y_pred = sqrt.(sum(abs.(back(model(test_x|> device), normalization)).^2, dims=2)) |> cpu
 
-        p_ = plot(test_y_true[:,1,1], label="true"); plot!(p_,test_y_pred[:,1,1], label="predict", title="test $i")
-        push!(p, p_)
+        #p_ = plot(test_y_true[:,1,1], label="true"); plot!(p_,test_y_pred[:,1,1], label="predict", title="test $i")
+        ax = CairoMakie.Axis(fig[1, 1+i], title = "test $i")
+
+        lines!(ax, test_y_true[:,1,1], label="true"); 
+        lines!(ax, test_y_pred[:,1,1], label="predict")
+        axislegend(ax)
       end
-      display(plot(p..., layout=(length(p),1)))
+      #pp = plot(p..., layout=(length(p),1))
+      if logging
+        log_image(lg, "sampleimage", fig)
+      end
     end
 
     # adjust learning range
@@ -267,6 +287,9 @@ function prepareTrainData(params, t, B)
       #φ = acos(z_ / r)
       #Ω = [r, θ, φ]
       X[:,j:j+2,z] .= kron(ones(length(t)), Ω')
+      for l=1:size(X,1) # make easy axis unique
+        X[l,j:j+2,z] .*= sign(X[l,j,z])
+      end
     end
 
 
@@ -318,6 +341,9 @@ function prepareTestData(paramsTrain, paramsTest, t, B)
     #φ = acos(z_ / r)
     #Ω = [r, θ, φ]
     X[:,j:j+2,1] .= kron(ones(length(t)), Ω')
+    for l=1:size(X,1) # make easy axis unique
+      X[l,j:j+2,1] .*= sign(X[l,j,1])
+    end
     j += 3
   end
   if useTime
