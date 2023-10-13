@@ -20,6 +20,8 @@ using HDF5
 
 using FLoops
 
+using SpecialFunctions
+
 ## sorting algorithms ##
 
 abstract type AbstractMNPModel end

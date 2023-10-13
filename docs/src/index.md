@@ -37,5 +37,7 @@ the [discussions](https://github.com/MagneticParticleImaging/MNPDynamics.jl/disc
 * [Tobias Knopp](https://www.tuhh.de/ibi/people/tobias-knopp-head-of-institute.html)
 * [Hannes Albers](https://github.com/h-albers)
 * [Tobias Kluth](https://github.com/tobias-kluth)
+* [Marco Maass](https://github.com/scorpien1985)
+* [Martin Möddel](https://github.com/hofmannmartin)
 
 A complete list of contributors can be found on the [Github page](https://github.com/MagneticParticleImaging/MNPDynamics.jl/graphs/contributors).

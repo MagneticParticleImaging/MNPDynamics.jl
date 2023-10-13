@@ -1,6 +1,6 @@
 name = "MNPDynamics"
 uuid = "f81e04c9-20b8-526d-9626-780ee78293fb"
-authors = ["Tobias Knopp <tobias@knoppweb.de>, Hannes Albers, Tobias Kluth, Martin Möddel"]
+authors = ["Tobias Knopp <tobias@knoppweb.de>, Hannes Albers, Tobias Kluth, Marco Maass, Martin Möddel"]
 version = "0.1.0"
 
 [deps]
@@ -20,6 +20,7 @@ Interpolations = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 HDF5 = "f67ccb44-e63f-5c2f-98bd-6dc0ccc4ba2f"
 FLoops = "cc61a311-1640-44b5-9fba-1b764f453329"
+SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 
 [compat]
 LinearSolve = "1.23"
