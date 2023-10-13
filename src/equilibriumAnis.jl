@@ -75,7 +75,7 @@ function eqAnisoMeanMagneticMomentAlongZAxis(H, DCore, MS, temp, kAnis, n, order
   
   F_c = VCore/kB/temp;
   
-  # calculation mostly in logarithmic scale to advoid overflow and underflow
+  # calculation mostly in logarithmic scale to avoid overflow and underflow
   log_2 = log(2);
   log_pi_sqrt = log(pi)/2;
   
@@ -219,9 +219,9 @@ function eqAnisoMeanMagneticMomentAlongZAxis(H, DCore, MS, temp, kAnis, n, order
   
   m = zeros(size(Z,1),3);
   # Normalize so that the mean magnetic moment is obtained
-  m[:,1] = msat.*z1./Z
-  m[:,2] = msat.*z2./Z
-  m[:,3] = msat.*z3./Z
+  m[:,1] = z1./Z
+  m[:,2] = z2./Z
+  m[:,3] = z3./Z
   
-  return m
+  return m # msat .* m
 end

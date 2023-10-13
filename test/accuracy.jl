@@ -40,4 +40,10 @@ yBrown = simulationMNP(B, t; p...)
 e = norm(yLangevin[:] - yNeel[:]) / norm(yLangevin[:])
 @test e < eps 
 
+p[:model] = EquilibriumAnisModel()
+yEqAnis = simulationMNP(B, t; p...)
+
+e = norm(yLangevin[:] - yEqAnis[:]) / norm(yLangevin[:])
+@test e < eps 
+
 end
