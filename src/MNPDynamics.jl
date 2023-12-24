@@ -19,6 +19,7 @@ using ProgressMeter
 using HDF5
 
 using FLoops
+using FFTW
 
 using SpecialFunctions
 

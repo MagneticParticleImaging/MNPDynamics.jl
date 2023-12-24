@@ -16,14 +16,12 @@ p[:DCore] = 18e-9         # particle diameter in nm
 p[:α] = 0.1               # damping coefficient
 p[:kAnis] = 10000*[1;0;0]  # anisotropy constant and anisotropy axis
 p[:N] = 20                # maximum spherical harmonics index to be considered
-p[:relaxation] = BROWN     # relaxation mode
+p[:relaxation] = NEEL
 p[:reltol] = 1e-6         # relative tolerance
 p[:abstol] = 1e-6         # absolute tolerance
 p[:tWarmup] = 1 / fb      # warmup time
-p[:model] = FokkerPlanckModel()
-p[:model] = EquilibriumAnisModel()
-#p[:model] = EquilibriumModel()
 
+p[:model] = EquilibriumModel()
 
 amps = [0.002, 0.005, 0.01, 0.02, 0.04]
 
@@ -40,6 +38,7 @@ mNoRelax = m[:,1]
 
 msBrown = []
 BsBrown = []
+p[:model] = EquilibriumAnisModel()
 
 for l=1:length(amps)
   global B =  t -> SVector{3,Float64}(amps[l]*[cospi(2*fx*t), 0, 0])
@@ -55,7 +54,8 @@ end
 msNeel = []
 BsNeel = []
 
-p[:relaxation] = NEEL
+p[:model] = FokkerPlanckModel()
+
 
 for l=1:length(amps)
   global B =  t -> SVector{3,Float64}(amps[l]*[cospi(2*fx*t), 0, 0])
@@ -68,7 +68,7 @@ end
 
 c = [RGB(0.0,0.29,0.57), RGB(0.3,0.5,0.7), RGB(0.94,0.53,0.12), RGB(0.99,0.75,0.05), RGB(0.5,0.5,0.5)]
 
-p1 = plot(BNoRelax,mNoRelax, title="Hysteresis Loops Brown Relaxation", lw=2.5, c=RGB(0.0,1.0,1.0),  
+p1 = plot(BNoRelax,mNoRelax, title="Hysteresis Loops EqAnis2 Relaxation", lw=2.5, c=RGB(0.0,1.0,1.0),  
                     ylabel="m / a.u.", xlabel="H / T", bottom_margin=5mm, label="No Relax")
 
 p2 = plot(BNoRelax,mNoRelax, title="Hysteresis Loops Neel Relaxation", lw=2.5, c=RGB(0.0,1.0,1.0),  

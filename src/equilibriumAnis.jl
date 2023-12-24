@@ -41,13 +41,33 @@ function simulationMNP(B::g, tVec, ::EquilibriumAnisModel;
     for ti=1:length(tVec)  
       y[ti, :] = R * vec(m_[ti,:])
     end
+
+    st = step(tVec)
+
+    kB = 1.38064852e-23
+    gamGyro = 1.75*10.0^11
+    VCore = π/6 * DCore^3
+
+    tau = 3e-10* exp(kAnis_*VCore / (kB*temp)*(1-maximum(abs.(B_))/700e-3)^2)
+
+    y = corrRelaxation(y, 1/st, tau)
   else
-    error("Needs to be implemeted")
+    error("Needs to be implemented")
   end
                   
   return y
 end
 
+function corrRelaxation(s, baseFreq, τ)
+  N = size(s,1)
+  S = rfft(s, 1)
+  Q = size(S,1)
+  freq = baseFreq*collect(0:(Q-1))./Q
+  R = 1 ./ (1.0 .+ 1im*2*pi*freq*τ)
+  S = S.*R
+  scorr = irfft(S, size(s,1), 1)
+  return scorr
+end
 
 gammaln(A) = log(gamma(A))
 
