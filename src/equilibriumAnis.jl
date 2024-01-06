@@ -42,7 +42,21 @@ function simulationMNP(B::g, tVec, ::EquilibriumAnisModel;
       y[ti, :] = R * vec(m_[ti,:])
     end
   else
-    error("Needs to be implemeted")
+    dt = step(tVec)/10
+
+    B_ = zeros(Float64, length(tVec), 3, 2)
+    for ti=1:length(tVec)  
+      B_[ti,:,1] = R' * vec(B(tVec[ti]))
+      B_[ti,:,2] = R' * vec(B(tVec[ti]+dt))
+    end
+
+    m1_ = eqAnisoMeanMagneticMomentAlongZAxis(B_[:,:,1], DCore, MS, temp, kAnis_, order, epsilon)
+    m2_ = eqAnisoMeanMagneticMomentAlongZAxis(B_[:,:,2], DCore, MS, temp, kAnis_, order, epsilon)
+
+    # the field is rotated into the original coordinate system
+    for ti=1:length(tVec)  
+      y[ti, :] = R * (vec(m1_[ti,:]) .- vec(m2_[ti,:])) ./ dt
+    end
   end
                   
   return y
