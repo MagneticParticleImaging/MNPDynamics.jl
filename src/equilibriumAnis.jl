@@ -14,7 +14,6 @@ function simulationMNP(B::g, tVec, ::EquilibriumAnisModel;
                        epsilon = 1e-10, # Value that defines when fields and kAnis are defined as "small"
                        kargs...
                        ) where g
-    
 
   y = zeros(Float64, length(tVec), 3)
 
@@ -42,7 +41,7 @@ function simulationMNP(B::g, tVec, ::EquilibriumAnisModel;
       y[ti, :] = R * vec(m_[ti,:])
     end
   else
-    dt = step(tVec)/10
+    dt = step(tVec)/10000
 
     B_ = zeros(Float64, length(tVec), 3, 2)
     for ti=1:length(tVec)  
@@ -55,7 +54,7 @@ function simulationMNP(B::g, tVec, ::EquilibriumAnisModel;
 
     # the field is rotated into the original coordinate system
     for ti=1:length(tVec)  
-      y[ti, :] = R * (vec(m1_[ti,:]) .- vec(m2_[ti,:])) ./ dt
+      y[ti, :] = R * (vec(m2_[ti,:]) .- vec(m1_[ti,:])) ./ dt
     end
   end
                   
@@ -149,7 +148,7 @@ function eqAnisoMeanMagneticMomentAlongZAxis(H, DCore, MS, temp, kAnis::Abstract
   for k = 0:order+1
       besselFuncTerm[:,k+1] = log.(besseli.(1/2+k,beta_normH_12)) # I_{1/2+l}(\beta|H|_{12}) in log-scale
       #v[:,k+1] = log(besseli(1/2+k,beta_normH_12,1))+beta_normH_12; %use of rescaled besseli 
-                                                                      #with mulitplication of exp(-beta_normH_12) possible to reduce overflow 
+                                                                      #with multiplication of exp(-beta_normH_12) possible to reduce overflow 
                                                                       #if beta_normH_12 is large (not used)
       besselFuncTerm[is_H_12_nearly_zero,k+1] .= 0 # if \beta|H|_{12} is approximately zero use limits
       factor = (-1/2+k)*log_2+log_pi_sqrt # 2^{-1/2+k}*sqrt(pi) in log-scale
@@ -159,7 +158,7 @@ function eqAnisoMeanMagneticMomentAlongZAxis(H, DCore, MS, temp, kAnis::Abstract
           # no anisotropy present -> should correspond to the equilibrium model 
           #                          without anisotropy (Langevin function)
           if k==0
-              #initizalize
+            #initizalize
             polyLimit  = zeros(size(log_squared_beta_H3))
           else
             polyLimit = k*log_squared_beta_H3  # (\beta H_3)^{2k} in log-scale
@@ -208,10 +207,10 @@ function eqAnisoMeanMagneticMomentAlongZAxis(H, DCore, MS, temp, kAnis::Abstract
   # order \alpha = 1/2 Laguerre polynomials
   # Note : L^{(-1/2)}_{n+1}(x)=L^{(1/2)}_{n+1}(x)- L^{(1/2)}_{n}(x)
   log_laguerrePolyMinus12[is_alpha_k_larger_zero,2:end] = log.(laguerrePoly12[:,2:end]-laguerrePoly12[:,1:end-1])
-  # calculate the "unnormalized" magenetization in z-direction
+  # calculate the "unnormalized" magnetization in z-direction
   z3[is_alpha_k_larger_zero] .= betaH3[is_alpha_k_larger_zero].*sum(exp.(besselFuncTerm[is_alpha_k_larger_zero,2:end]+powerTerms32[is_alpha_k_larger_zero,1:end-1]+log.(laguerrePoly12[:,1:end-1])),dims=2)
   #else
-  # calculate the magenetization in z-direction if approximately zero is nearly zero
+  # calculate the magnetization in z-direction if approximately zero is nearly zero
   z3[is_alpha_k_zero] .= betaH3[is_alpha_k_zero].*sum(exp.(besselFuncTerm[is_alpha_k_zero,2:end]+powerTerms32[is_alpha_k_zero,1:end-1]+log_laguerrePoly12[:,1:end-1]),dims=2)
   
   # In Limit \alpha_K->0 limit the order of \alpha plays no role
