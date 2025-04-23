@@ -41,7 +41,7 @@ function simulationMNPMultiParams(B::G, t, params::Vector{P}, ::EnsembleSerial; 
   return magneticMoments
 end
 
-function simulationMNPMultiParams(B::G, t, params::Vector{P}, ::EnsembleThreads; showprogress=true, kargs...) where {G,P}
+function simulationMNPMultiParams(B::G, t, params::Vector{P}, ::EnsembleThreads; blas_threads_n=1, showprogress=true, kargs...) where {G,P}
   M = length(params)
   magneticMoments = zeros(Float32, length(t), 3, M)
   numThreadsBLAS = BLAS.get_num_threads()
@@ -57,7 +57,7 @@ function simulationMNPMultiParams(B::G, t, params::Vector{P}, ::EnsembleThreads;
 
   prog = Progress(M; dt=0.5, enabled=showprogress)
 
-  BLAS.set_num_threads(1)
+  BLAS.set_num_threads(blas_threads_n)
 
   @floop for m=1:M
     let p=params[m], kargsInner_=copy(kargsInner)
