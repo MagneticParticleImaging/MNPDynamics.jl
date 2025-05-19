@@ -41,9 +41,13 @@ function simulationMNPMultiParams(B::G, t, params::Vector{P}, ::EnsembleSerial; 
   return magneticMoments
 end
 
-function simulationMNPMultiParams(B::G, t, params::Vector{P}, ::EnsembleThreads; blas_threads_n=1, showprogress=true, kargs...) where {G,P}
+function simulationMNPMultiParams(B::G, t, params::Vector{P}, ::EnsembleThreads; 
+  blas_threads_n=1, showprogress=true, magn_moments_save_path=nothing, kargs...
+) where {G,P}
   M = length(params)
-  magneticMoments = zeros(Float32, length(t), 3, M)
+  if isnothing(magn_moments_save_path)
+    magneticMoments = zeros(Float32, length(t), 3, M)
+  end
   numThreadsBLAS = BLAS.get_num_threads()
 
   kargsInner = copy(kargs)
@@ -74,14 +78,23 @@ function simulationMNPMultiParams(B::G, t, params::Vector{P}, ::EnsembleThreads;
       end
 
       y = simulationMNP(B_, t; kargsInner_...)
-      magneticMoments[:,:,m] .= y
+      if isnothing(magn_moments_save_path)
+        magneticMoments[:,:,m] .= y
+      else
+        save_path = joinpath(magn_moments_save_path, "sm_$(m).npy")
+        npzwrite(save_path, y)
+      end
     end
     next!(prog)
   end
   BLAS.set_num_threads(numThreadsBLAS)
 
   finish!(prog)
-  return magneticMoments
+  if isnothing(magn_moments_save_path)
+    return magneticMoments
+  else
+    return nothing
+  end
 end
 
 

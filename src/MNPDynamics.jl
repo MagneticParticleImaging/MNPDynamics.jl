@@ -21,6 +21,7 @@ using HDF5
 using FLoops
 
 using SpecialFunctions
+using NPZ
 
 ## sorting algorithms ##
 
