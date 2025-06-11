@@ -2,7 +2,7 @@ using Documenter, MNPDynamics
 
 makedocs(
     format = Documenter.HTML(prettyurls = false),
-    modules = [MPIFiles],
+    modules = [MNPDynamics],
     sitename = "MNPDynamics",
     authors = "Tobias Knopp et al.",
     pages = [
