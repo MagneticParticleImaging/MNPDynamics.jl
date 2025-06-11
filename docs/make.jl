@@ -1,26 +1,19 @@
 using Documenter, MNPDynamics
 
-makedocs(;
-    #doctest = true,
-    #strict = :doctest,
-    modules = [MNPDynamics],
-    checkdocs = :exports,
-    sitename = " ",
-    authors = "Tobias Knopp and contributors",
-    repo="https://github.com/MagneticParticleImaging/MNPDynamics.jl/blob/{commit}{path}#{line}",
-    format=Documenter.HTML(;
-        prettyurls=get(ENV, "CI", "false") == "true",
-        canonical="https://MagneticParticleImaging.github.io/MNPDynamics.jl",
-        assets=String[],
-    ),
+makedocs(
+    format = Documenter.HTML(prettyurls = false),
+    modules = [MPIFiles],
+    sitename = "MNPDynamics",
+    authors = "Tobias Knopp et al.",
     pages = [
       "Home" => "index.md",
       "Overview" => "overview.md",
       "API" => "api.md",
-    ]
+    ],
+    warnonly = [:missing_docs]
 )
 
 deploydocs(
     repo = "github.com/MagneticParticleImaging/MNPDynamics.jl.git",
+    target = "build",
 )
-
