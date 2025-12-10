@@ -1,7 +1,7 @@
 name = "MNPDynamics"
 uuid = "f81e04c9-20b8-526d-9626-780ee78293fb"
 authors = ["Tobias Knopp <tobias@knoppweb.de>, Hannes Albers, Tobias Kluth, Marco Maass, Martin Möddel"]
-version = "0.1.0"
+version = "0.1.1"
 
 [deps]
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
