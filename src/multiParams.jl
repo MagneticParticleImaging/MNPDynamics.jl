@@ -59,7 +59,7 @@ function simulationMNPMultiParams(B::G, t, params::Vector{P}, ::EnsembleThreads;
 
   BLAS.set_num_threads(1)
 
-  @floop for m=1:M
+  @tasks for m=1:M
     let p=params[m], kargsInner_=copy(kargsInner)
       B_ = t -> ( B(t, p) )
 
