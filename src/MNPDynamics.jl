@@ -3,7 +3,6 @@ module MNPDynamics
 using LinearAlgebra
 using SparseArrays
 using OrdinaryDiffEq
-using SparseDiffTools
 using LinearSolve
 
 using ImageFiltering
