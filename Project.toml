@@ -1,7 +1,7 @@
 name = "MNPDynamics"
 uuid = "f81e04c9-20b8-526d-9626-780ee78293fb"
 authors = ["Tobias Knopp <tobias@knoppweb.de>, Hannes Albers, Tobias Kluth, Marco Maass, Martin Möddel"]
-version = "0.1.5"
+version = "0.1.4"
 
 [deps]
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
@@ -28,7 +28,7 @@ HDF5 = "0.16, 0.17"
 ImageFiltering = "0.7"
 Interpolations = "0.14, 0.15, 0.16"
 LinearAlgebra = "1"
-LinearSolve = "1.23, 2, 3, 5.18"
+LinearSolve = "5.18"
 OffsetArrays = "1"
 OhMyThreads = "0.8"
 OrdinaryDiffEq = "6.101, 7.0"
